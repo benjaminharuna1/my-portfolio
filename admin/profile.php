@@ -26,8 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     // Handle avatar upload
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === 0) {
-        $upload = uploadImage($_FILES['avatar'], '../uploads');
+        $upload = uploadImage($_FILES['avatar']);
         if ($upload['success']) {
+            // Delete old avatar if exists
+            if (!empty($user['avatar_filename'])) {
+                deleteImage($user['avatar_filename']);
+            }
             $avatar_filename = $upload['filename'];
             $avatar_url = $upload['url'];
         } else {
@@ -37,8 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     if ($avatar_filename) {
         $conn->query("UPDATE users SET first_name='$first_name', last_name='$last_name', email='$email', phone='$phone', bio='$bio', avatar_url='$avatar_url', avatar_filename='$avatar_filename' WHERE id=$user_id");
+        ErrorLogger::log("User avatar updated: $user_id", 'INFO');
     } else {
         $conn->query("UPDATE users SET first_name='$first_name', last_name='$last_name', email='$email', phone='$phone', bio='$bio', avatar_url='$avatar_url' WHERE id=$user_id");
+        ErrorLogger::log("User profile updated: $user_id", 'INFO');
     }
     
     $message = '<div class="alert alert-success">Profile updated successfully!</div>';
@@ -79,66 +85,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/admin.css">
     <style>
-        .profile-avatar { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea; }
-        .avatar-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-top: 10px; }
+        .profile-avatar { 
+            width: 150px; 
+            height: 150px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 3px solid #667eea;
+            display: block;
+            margin: 0 auto;
+        }
+        .avatar-preview { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .avatar-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #e9ecef;
+            margin: 0 auto;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block bg-dark sidebar">
-                <div class="position-sticky pt-3">
-                    <h5 class="text-white px-3 mb-4">Admin Panel</h5>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php">
-                                <i class="fas fa-chart-line"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/portfolio.php">
-                                <i class="fas fa-briefcase"></i> Portfolio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/services.php">
-                                <i class="fas fa-cogs"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/about.php">
-                                <i class="fas fa-user"></i> About
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/messages.php">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/social.php">
-                                <i class="fas fa-share-alt"></i> Social Links
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo SITE_URL; ?>/admin/profile.php">
-                                <i class="fas fa-user-circle"></i> My Profile
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/settings.php">
-                                <i class="fas fa-cog"></i> Website Settings
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include '../includes/admin-sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4">
@@ -189,10 +171,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     <div class="mb-3">
                                         <label for="avatar" class="form-label">Profile Picture</label>
                                         <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
-                                        <small class="text-muted">Max 5MB. Recommended: 300x300px</small>
+                                        <small class="text-muted">Max 5MB. Recommended: 300x300px (will be cropped to circle)</small>
                                         <?php if ($user && !empty($user['avatar_url'])): ?>
-                                            <div class="mt-2">
-                                                <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Avatar" class="avatar-preview">
+                                            <div class="mt-3 text-center">
+                                                <div class="avatar-container">
+                                                    <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Avatar" class="avatar-preview">
+                                                </div>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -216,22 +200,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <div class="card-header">
                                 <h5>Account Information</h5>
                             </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <strong>Username:</strong>
-                                    <p><?php echo $user && !empty($user['username']) ? htmlspecialchars($user['username']) : '—'; ?></p>
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Email:</strong>
-                                    <p><?php echo $user && !empty($user['email']) ? htmlspecialchars($user['email']) : '—'; ?></p>
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Member Since:</strong>
-                                    <p><?php echo $user && !empty($user['created_at']) ? date('M d, Y', strtotime($user['created_at'])) : '—'; ?></p>
-                                </div>
-                                <div class="mb-3">
-                                    <strong>Last Updated:</strong>
-                                    <p><?php echo $user && !empty($user['updated_at']) ? date('M d, Y H:i', strtotime($user['updated_at'])) : '—'; ?></p>
+                            <div class="card-body text-center">
+                                <?php if ($user && !empty($user['avatar_url'])): ?>
+                                    <div class="avatar-container mb-3">
+                                        <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Profile" class="profile-avatar">
+                                    </div>
+                                <?php else: ?>
+                                    <div class="avatar-container mb-3">
+                                        <i class="fas fa-user fa-4x text-muted"></i>
+                                    </div>
+                                <?php endif; ?>
+                                <h5><?php echo ($user && !empty($user['first_name']) ? htmlspecialchars($user['first_name']) : '') . ' ' . ($user && !empty($user['last_name']) ? htmlspecialchars($user['last_name']) : ''); ?></h5>
+                                <p class="text-muted"><?php echo $user && !empty($user['email']) ? htmlspecialchars($user['email']) : 'No email'; ?></p>
+                                
+                                <hr>
+                                
+                                <div class="text-start">
+                                    <div class="mb-2">
+                                        <strong>Username:</strong>
+                                        <p><?php echo $user && !empty($user['username']) ? htmlspecialchars($user['username']) : '—'; ?></p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Member Since:</strong>
+                                        <p><?php echo $user && !empty($user['created_at']) ? date('M d, Y', strtotime($user['created_at'])) : '—'; ?></p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Last Updated:</strong>
+                                        <p><?php echo $user && !empty($user['updated_at']) ? date('M d, Y H:i', strtotime($user['updated_at'])) : '—'; ?></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

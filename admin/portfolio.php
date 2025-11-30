@@ -15,13 +15,13 @@ if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $item = $conn->query("SELECT featured_image_filename FROM portfolio_items WHERE id = $id")->fetch_assoc();
     if ($item && $item['featured_image_filename']) {
-        deleteImage($item['featured_image_filename'], '../uploads');
+        deleteImage($item['featured_image_filename']);
     }
     // Delete associated images
     $images = $conn->query("SELECT image_filename FROM portfolio_images WHERE portfolio_id = $id");
     while ($img = $images->fetch_assoc()) {
         if ($img['image_filename']) {
-            deleteImage($img['image_filename'], '../uploads');
+            deleteImage($img['image_filename']);
         }
     }
     $conn->query("DELETE FROM portfolio_items WHERE id = $id");
@@ -33,7 +33,7 @@ if (isset($_GET['delete_image'])) {
     $image_id = intval($_GET['delete_image']);
     $image = $conn->query("SELECT image_filename, portfolio_id FROM portfolio_images WHERE id = $image_id")->fetch_assoc();
     if ($image && $image['image_filename']) {
-        deleteImage($image['image_filename'], '../uploads');
+        deleteImage($image['image_filename']);
     }
     $conn->query("DELETE FROM portfolio_images WHERE id = $image_id");
     $message = '<div class="alert alert-success">Image deleted.</div>';
@@ -48,11 +48,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $link = $conn->real_escape_string($_POST['link']);
     $featured_image_url = $conn->real_escape_string($_POST['featured_image_url']);
     $featured_image_filename = '';
+    $status = isset($_POST['status']) ? $conn->real_escape_string($_POST['status']) : 'published';
+    $is_featured = isset($_POST['is_featured']) ? 1 : 0;
     
     // Handle featured image upload
     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === 0) {
-        $upload = uploadImage($_FILES['featured_image'], '../uploads');
+        $upload = uploadImage($_FILES['featured_image']);
         if ($upload['success']) {
+            // Delete old image if exists
+            if (isset($_POST['id']) && $_POST['id']) {
+                $old_item = $conn->query("SELECT featured_image_filename FROM portfolio_items WHERE id = " . intval($_POST['id']))->fetch_assoc();
+                if ($old_item && !empty($old_item['featured_image_filename'])) {
+                    deleteImage($old_item['featured_image_filename']);
+                }
+            }
             $featured_image_filename = $upload['filename'];
             $featured_image_url = $upload['url'];
         } else {
@@ -63,14 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (isset($_POST['id']) && $_POST['id']) {
         $id = intval($_POST['id']);
         if ($featured_image_filename) {
-            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', featured_image_filename='$featured_image_filename' WHERE id=$id");
+            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', featured_image_filename='$featured_image_filename', status='$status', is_featured=$is_featured WHERE id=$id");
         } else {
-            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url' WHERE id=$id");
+            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', status='$status', is_featured=$is_featured WHERE id=$id");
         }
         $message = '<div class="alert alert-success">Portfolio item updated.</div>';
+        ErrorLogger::log("Portfolio item updated: ID $id, Status: $status, Featured: $is_featured", 'INFO');
     } else {
-        $conn->query("INSERT INTO portfolio_items (title, description, body, category, link, featured_image_url, featured_image_filename) VALUES ('$title', '$description', '$body', '$category', '$link', '$featured_image_url', '$featured_image_filename')");
+        $conn->query("INSERT INTO portfolio_items (title, description, body, category, link, featured_image_url, featured_image_filename, status, is_featured) VALUES ('$title', '$description', '$body', '$category', '$link', '$featured_image_url', '$featured_image_filename', '$status', $is_featured)");
         $message = '<div class="alert alert-success">Portfolio item added.</div>';
+        ErrorLogger::log("Portfolio item created: $title, Status: $status", 'INFO');
     }
 }
 
@@ -82,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $image_filename = '';
     
     if (isset($_FILES['portfolio_image']) && $_FILES['portfolio_image']['error'] === 0) {
-        $upload = uploadImage($_FILES['portfolio_image'], '../uploads');
+        $upload = uploadImage($_FILES['portfolio_image']);
         if ($upload['success']) {
             $image_filename = $upload['filename'];
             $image_url = $upload['url'];
@@ -136,49 +147,7 @@ if (isset($_GET['edit'])) {
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block bg-dark sidebar">
-                <div class="position-sticky pt-3">
-                    <h5 class="text-white px-3 mb-4">Admin Panel</h5>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php">
-                                <i class="fas fa-chart-line"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo SITE_URL; ?>/admin/portfolio.php">
-                                <i class="fas fa-briefcase"></i> Portfolio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/services.php">
-                                <i class="fas fa-cogs"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/about.php">
-                                <i class="fas fa-user"></i> About
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/messages.php">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/social.php">
-                                <i class="fas fa-share-alt"></i> Social Links
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include '../includes/admin-sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4">

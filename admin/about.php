@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $upload = uploadImage($_FILES['image'], '../uploads');
+        $upload = uploadImage($_FILES['image']);
         if ($upload['success']) {
             $image_filename = $upload['filename'];
             $image_url = $upload['url'];

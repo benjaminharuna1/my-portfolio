@@ -1,7 +1,17 @@
 <?php
 // Image upload handler
-function uploadImage($file, $folder = 'uploads') {
+function uploadImage($file, $folder = null) {
     try {
+        // Use root-based uploads folder if not specified
+        if ($folder === null) {
+            $folder = dirname(__DIR__) . '/uploads';
+        }
+        
+        // Convert to absolute path if relative
+        if (!is_dir($folder) && strpos($folder, '/') !== 0 && strpos($folder, ':') === false) {
+            $folder = dirname(__DIR__) . '/' . $folder;
+        }
+
         // Create uploads directory if it doesn't exist
         if (!is_dir($folder)) {
             if (!mkdir($folder, 0755, true)) {
@@ -10,7 +20,7 @@ function uploadImage($file, $folder = 'uploads') {
         }
 
         // Validate file
-        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $allowed = ALLOWED_UPLOAD_TYPES;
         $filename = $file['name'];
         $filesize = $file['size'];
         $fileerror = $file['error'];
@@ -22,13 +32,14 @@ function uploadImage($file, $folder = 'uploads') {
         // Validate extension
         if (!in_array($fileext, $allowed)) {
             ErrorLogger::log("Invalid file type attempted: $fileext for file: $filename", 'WARNING');
-            return ['success' => false, 'message' => 'Invalid file type. Allowed: JPG, PNG, GIF, WebP'];
+            return ['success' => false, 'message' => 'Invalid file type. Allowed: ' . implode(', ', $allowed)];
         }
 
-        // Validate file size (max 5MB)
-        if ($filesize > 5000000) {
+        // Validate file size
+        $max_size = MAX_UPLOAD_SIZE;
+        if ($filesize > $max_size) {
             ErrorLogger::log("File too large: $filename (" . ($filesize / 1024 / 1024) . "MB)", 'WARNING');
-            return ['success' => false, 'message' => 'File too large. Max 5MB'];
+            return ['success' => false, 'message' => 'File too large. Max ' . ($max_size / 1024 / 1024) . 'MB'];
         }
 
         // Check for upload errors
@@ -54,11 +65,15 @@ function uploadImage($file, $folder = 'uploads') {
         // Move file
         if (move_uploaded_file($filetmp, $filedestination)) {
             ErrorLogger::log("File uploaded successfully: $newfilename", 'INFO');
+            
+            // Generate proper URL - use SITE_URL/uploads/filename
+            $url = SITE_URL . '/uploads/' . $newfilename;
+            
             return [
                 'success' => true,
                 'filename' => $newfilename,
                 'path' => $filedestination,
-                'url' => '/' . $filedestination
+                'url' => $url
             ];
         } else {
             throw new Exception("Failed to move uploaded file from $filetmp to $filedestination");
@@ -70,8 +85,18 @@ function uploadImage($file, $folder = 'uploads') {
 }
 
 // Delete image
-function deleteImage($filename, $folder = 'uploads') {
+function deleteImage($filename, $folder = null) {
     try {
+        // Use root-based uploads folder if not specified
+        if ($folder === null) {
+            $folder = dirname(__DIR__) . '/uploads';
+        }
+        
+        // Convert to absolute path if relative
+        if (!is_dir($folder) && strpos($folder, '/') !== 0 && strpos($folder, ':') === false) {
+            $folder = dirname(__DIR__) . '/' . $folder;
+        }
+        
         $filepath = $folder . '/' . $filename;
         if (file_exists($filepath)) {
             if (unlink($filepath)) {

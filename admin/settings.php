@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     // Handle logo upload
     if (isset($_FILES['logo']) && $_FILES['logo']['error'] === 0) {
-        $upload = uploadImage($_FILES['logo'], '../uploads');
+        $upload = uploadImage($_FILES['logo']);
         if ($upload['success']) {
             $logo_filename = $upload['filename'];
             $logo_url = $upload['url'];
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     // Handle favicon upload
     if (isset($_FILES['favicon']) && $_FILES['favicon']['error'] === 0) {
-        $upload = uploadImage($_FILES['favicon'], '../uploads');
+        $upload = uploadImage($_FILES['favicon']);
         if ($upload['success']) {
             $favicon_filename = $upload['filename'];
             $favicon_url = $upload['url'];

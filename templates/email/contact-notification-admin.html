@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Contact Message</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 20px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .section-content {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        
+        .sender-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .info-item p {
+            margin: 5px 0;
+        }
+        
+        .info-item strong {
+            color: #667eea;
+        }
+        
+        .message-box {
+            background-color: white;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            margin-top: 10px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        
+        .action-button:hover {
+            opacity: 0.9;
+        }
+        
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 New Contact Message</h1>
+            <p>Someone has reached out to you</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-title">Sender Information</div>
+                <div class="section-content">
+                    <div class="sender-info">
+                        <div class="info-item">
+                            <p><strong>Name:</strong></p>
+                            <p>{{SENDER_NAME}}</p>
+                        </div>
+                        <div class="info-item">
+                            <p><strong>Email:</strong></p>
+                            <p><a href="mailto:{{SENDER_EMAIL}}">{{SENDER_EMAIL}}</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Message</div>
+                <div class="message-box">
+{{MESSAGE}}
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p style="text-align: center; margin-top: 30px;">
+                <a href="mailto:{{SENDER_EMAIL}}" class="action-button">Reply to Message</a>
+            </p>
+            
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="{{ADMIN_LINK}}" style="color: #667eea; text-decoration: none; font-size: 12px;">View in Dashboard</a>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from your portfolio website.</p>
+            <p style="margin-top: 10px;">© {{CURRENT_YEAR}} {{SITE_NAME}}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

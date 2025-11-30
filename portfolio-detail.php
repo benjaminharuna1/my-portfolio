@@ -161,22 +161,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         </div>
                         <div class="card-body">
                             <?php echo $review_message; ?>
+                            
+                            <!-- Privacy Notice -->
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-shield-alt"></i> <strong>Your Privacy Matters</strong>
+                                <p class="mb-0" style="margin-top: 8px; font-size: 0.9rem;">Your email address will never be shared with third parties or displayed publicly. Only your name will appear with your review. We respect your privacy.</p>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            
                             <form method="POST">
                                 <input type="hidden" name="action" value="submit_review">
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="reviewer_name" class="form-label">Your Name</label>
-                                        <input type="text" class="form-control" id="reviewer_name" name="reviewer_name" required>
+                                        <label for="reviewer_name" class="form-label">Your Name *</label>
+                                        <input type="text" class="form-control" id="reviewer_name" name="reviewer_name" placeholder="Your name (will be visible)" required>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="reviewer_email" class="form-label">Your Email</label>
-                                        <input type="email" class="form-control" id="reviewer_email" name="reviewer_email" required>
+                                        <label for="reviewer_email" class="form-label">Your Email *</label>
+                                        <input type="email" class="form-control" id="reviewer_email" name="reviewer_email" placeholder="Your email (kept private)" required>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="rating" class="form-label">Rating</label>
+                                    <label for="rating" class="form-label">Rating *</label>
                                     <select class="form-control" id="rating" name="rating" required>
                                         <option value="">Select a rating</option>
                                         <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
@@ -188,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="review_text" class="form-label">Your Review</label>
+                                    <label for="review_text" class="form-label">Your Review *</label>
                                     <textarea class="form-control" id="review_text" name="review_text" rows="4" placeholder="Share your thoughts about this project..." required></textarea>
                                 </div>
 
@@ -201,20 +209,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                     <!-- Approved Reviews -->
                     <?php
-                    $reviews = $conn->query("SELECT * FROM portfolio_ratings WHERE portfolio_id = $id AND is_approved = 1 ORDER BY created_at DESC");
+                    $reviews = $conn->query("SELECT id, reviewer_name, rating, review_text, created_at FROM portfolio_ratings WHERE portfolio_id = $id AND is_approved = 1 ORDER BY created_at DESC");
                     if ($reviews && $reviews->num_rows > 0):
                     ?>
                     <div class="card mt-4">
                         <div class="card-header">
-                            <h5>Reviews</h5>
+                            <h5>
+                                <i class="fas fa-comments"></i> Reviews
+                                <span class="badge bg-primary"><?php echo $reviews->num_rows; ?></span>
+                            </h5>
                         </div>
                         <div class="card-body">
                             <?php while ($review = $reviews->fetch_assoc()): ?>
                             <div class="review-item mb-4 pb-4 border-bottom">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
-                                        <h6 class="mb-0"><?php echo htmlspecialchars($review['reviewer_name']); ?></h6>
-                                        <small class="text-muted"><?php echo date('M d, Y', strtotime($review['created_at'])); ?></small>
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($review['reviewer_name']); ?>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt"></i> <?php echo date('M d, Y', strtotime($review['created_at'])); ?>
+                                        </small>
                                     </div>
                                     <div class="rating-stars">
                                         <?php for ($i = 0; $i < $review['rating']; $i++): ?>
@@ -225,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                         <?php endfor; ?>
                                     </div>
                                 </div>
-                                <p><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
+                                <p class="review-text"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
                             </div>
                             <?php endwhile; ?>
                         </div>

@@ -23,7 +23,14 @@ $page_title = 'Home';
                     </div>
                     <h1 class="display-4 fw-bold mb-3">I'm Web Developer</h1>
                     <p class="lead mb-4">Creating beautiful and functional web experiences with modern technologies.</p>
-                    <a href="<?php echo SITE_URL; ?>/about.php" class="btn btn-primary btn-lg">Learn More</a>
+                    <div class="button-group">
+                        <a href="<?php echo SITE_URL; ?>/about.php" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-arrow-right"></i> Learn More
+                        </a>
+                        <a href="<?php echo SITE_URL; ?>/contact.php" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-calendar-check"></i> Book a Service
+                        </a>
+                    </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="hero-image">
@@ -99,6 +106,19 @@ $page_title = 'Home';
             </div>
             <div class="text-center mt-4">
                 <a href="<?php echo SITE_URL; ?>/portfolio.php" class="btn btn-outline-primary">View All Portfolio</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section py-5">
+        <div class="container">
+            <div class="cta-content text-center">
+                <h2 class="cta-title mb-3">Ready to Start Your Next Project?</h2>
+                <p class="cta-subtitle mb-4">Let's collaborate and bring your ideas to life with cutting-edge web solutions.</p>
+                <a href="<?php echo SITE_URL; ?>/contact.php" class="btn btn-light btn-lg cta-button">
+                    <i class="fas fa-envelope"></i> Get In Touch Today
+                </a>
             </div>
         </div>
     </section>

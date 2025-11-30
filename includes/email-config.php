@@ -130,41 +130,48 @@ class EmailConfig {
  */
 class EmailTemplate {
     /**
+     * Load template file and replace variables
+     */
+    private static function loadTemplate($templateName, $variables = []) {
+        $templatePath = dirname(__DIR__) . '/templates/email/' . $templateName . '.html';
+        
+        if (!file_exists($templatePath)) {
+            ErrorLogger::log("Email template not found: $templatePath", 'WARNING');
+            return '';
+        }
+        
+        $content = file_get_contents($templatePath);
+        
+        // Replace variables
+        foreach ($variables as $key => $value) {
+            $content = str_replace('{{' . $key . '}}', $value, $content);
+        }
+        
+        return $content;
+    }
+    
+    /**
      * Review notification email for admin
      */
     public static function reviewNotificationAdmin($reviewerName, $rating, $reviewText, $portfolioTitle) {
         $subject = "New Review Received - $portfolioTitle";
         
-        $body = "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #667eea; color: white; padding: 20px; border-radius: 5px; }
-                .content { padding: 20px; background: #f9f9f9; margin: 20px 0; border-radius: 5px; }
-                .rating { color: #ffc107; font-size: 18px; }
-                .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h2>New Review Received</h2>
-                </div>
-                <div class='content'>
-                    <p><strong>Portfolio Item:</strong> $portfolioTitle</p>
-                    <p><strong>Reviewer:</strong> $reviewerName</p>
-                    <p><strong>Rating:</strong> <span class='rating'>" . str_repeat('★', $rating) . str_repeat('☆', 5 - $rating) . "</span></p>
-                    <p><strong>Review:</strong></p>
-                    <p>$reviewText</p>
-                </div>
-                <div class='footer'>
-                    <p>This is an automated notification from your portfolio website.</p>
-                </div>
-            </div>
-        </body>
-        </html>";
+        $ratingStars = str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
+        $ratingText = ['Poor', 'Fair', 'Average', 'Good', 'Excellent'][$rating - 1] ?? 'Excellent';
+        
+        $variables = [
+            'PORTFOLIO_TITLE' => htmlspecialchars($portfolioTitle),
+            'REVIEWER_NAME' => htmlspecialchars($reviewerName),
+            'REVIEWER_EMAIL' => htmlspecialchars($reviewerName), // Placeholder
+            'RATING_STARS' => $ratingStars,
+            'RATING_TEXT' => $ratingText . ' (' . $rating . '/5)',
+            'REVIEW_TEXT' => nl2br(htmlspecialchars($reviewText)),
+            'ADMIN_LINK' => SITE_URL . '/admin/portfolio.php',
+            'SITE_NAME' => SITE_NAME,
+            'CURRENT_YEAR' => date('Y')
+        ];
+        
+        $body = self::loadTemplate('review-notification-admin', $variables);
         
         return ['subject' => $subject, 'body' => $body];
     }
@@ -175,33 +182,15 @@ class EmailTemplate {
     public static function reviewConfirmation($reviewerName, $portfolioTitle) {
         $subject = "Thank You for Your Review";
         
-        $body = "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #667eea; color: white; padding: 20px; border-radius: 5px; }
-                .content { padding: 20px; background: #f9f9f9; margin: 20px 0; border-radius: 5px; }
-                .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h2>Thank You for Your Review</h2>
-                </div>
-                <div class='content'>
-                    <p>Hi $reviewerName,</p>
-                    <p>Thank you for taking the time to review <strong>$portfolioTitle</strong>. Your feedback is valuable and helps us improve.</p>
-                    <p>We appreciate your support!</p>
-                </div>
-                <div class='footer'>
-                    <p>This is an automated message from our portfolio website.</p>
-                </div>
-            </div>
-        </body>
-        </html>";
+        $variables = [
+            'REVIEWER_NAME' => htmlspecialchars($reviewerName),
+            'PORTFOLIO_TITLE' => htmlspecialchars($portfolioTitle),
+            'SOCIAL_LINKS' => self::getSocialLinks(),
+            'SITE_NAME' => SITE_NAME,
+            'CURRENT_YEAR' => date('Y')
+        ];
+        
+        $body = self::loadTemplate('review-confirmation', $variables);
         
         return ['subject' => $subject, 'body' => $body];
     }
@@ -212,34 +201,16 @@ class EmailTemplate {
     public static function contactNotificationAdmin($senderName, $senderEmail, $message) {
         $subject = "New Contact Message from $senderName";
         
-        $body = "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #667eea; color: white; padding: 20px; border-radius: 5px; }
-                .content { padding: 20px; background: #f9f9f9; margin: 20px 0; border-radius: 5px; }
-                .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h2>New Contact Message</h2>
-                </div>
-                <div class='content'>
-                    <p><strong>From:</strong> $senderName</p>
-                    <p><strong>Email:</strong> <a href='mailto:$senderEmail'>$senderEmail</a></p>
-                    <p><strong>Message:</strong></p>
-                    <p>" . nl2br(htmlspecialchars($message)) . "</p>
-                </div>
-                <div class='footer'>
-                    <p>This is an automated notification from your portfolio website.</p>
-                </div>
-            </div>
-        </body>
-        </html>";
+        $variables = [
+            'SENDER_NAME' => htmlspecialchars($senderName),
+            'SENDER_EMAIL' => htmlspecialchars($senderEmail),
+            'MESSAGE' => nl2br(htmlspecialchars($message)),
+            'ADMIN_LINK' => SITE_URL . '/admin/messages.php',
+            'SITE_NAME' => SITE_NAME,
+            'CURRENT_YEAR' => date('Y')
+        ];
+        
+        $body = self::loadTemplate('contact-notification-admin', $variables);
         
         return ['subject' => $subject, 'body' => $body];
     }
@@ -247,38 +218,40 @@ class EmailTemplate {
     /**
      * Contact confirmation email for sender
      */
-    public static function contactConfirmation($senderName) {
+    public static function contactConfirmation($senderName, $senderEmail = '') {
         $subject = "We Received Your Message";
         
-        $body = "
-        <html>
-        <head>
-            <style>
-                body { font-family: Arial, sans-serif; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #667eea; color: white; padding: 20px; border-radius: 5px; }
-                .content { padding: 20px; background: #f9f9f9; margin: 20px 0; border-radius: 5px; }
-                .footer { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <h2>Message Received</h2>
-                </div>
-                <div class='content'>
-                    <p>Hi $senderName,</p>
-                    <p>Thank you for reaching out! We have received your message and will get back to you within 24 hours.</p>
-                    <p>We appreciate your interest and look forward to connecting with you.</p>
-                </div>
-                <div class='footer'>
-                    <p>This is an automated message from our portfolio website.</p>
-                </div>
-            </div>
-        </body>
-        </html>";
+        // Get admin email from settings
+        global $conn;
+        $about = $conn->query("SELECT email FROM about LIMIT 1")->fetch_assoc();
+        $contactEmail = $about['email'] ?? 'contact@example.com';
+        
+        $variables = [
+            'SENDER_NAME' => htmlspecialchars($senderName),
+            'CONTACT_EMAIL' => htmlspecialchars($contactEmail),
+            'SOCIAL_LINKS' => self::getSocialLinks(),
+            'SITE_NAME' => SITE_NAME,
+            'CURRENT_YEAR' => date('Y')
+        ];
+        
+        $body = self::loadTemplate('contact-confirmation', $variables);
         
         return ['subject' => $subject, 'body' => $body];
+    }
+    
+    /**
+     * Generate social links HTML
+     */
+    private static function getSocialLinks() {
+        global $conn;
+        $result = $conn->query("SELECT url, platform FROM social_links LIMIT 4");
+        
+        $links = '';
+        while ($social = $result->fetch_assoc()) {
+            $links .= '<a href="' . htmlspecialchars($social['url']) . '">' . htmlspecialchars($social['platform']) . '</a>';
+        }
+        
+        return $links;
     }
 }
 ?>

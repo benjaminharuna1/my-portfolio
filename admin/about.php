@@ -24,6 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         $upload = uploadImage($_FILES['image']);
         if ($upload['success']) {
+            // Delete old image if exists
+            if ($about && !empty($about['image_filename'])) {
+                deleteImage($about['image_filename']);
+            }
             $image_filename = $upload['filename'];
             $image_url = $upload['url'];
         } else {

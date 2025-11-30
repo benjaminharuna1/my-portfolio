@@ -38,6 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === 0) {
             $upload = uploadImage($_FILES['logo']);
             if ($upload['success']) {
+                // Delete old logo if exists
+                if ($settings && !empty($settings['logo_filename'])) {
+                    deleteImage($settings['logo_filename']);
+                }
                 $logo_filename = $upload['filename'];
                 $logo_url = $upload['url'];
             } else {
@@ -49,6 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if (isset($_FILES['favicon']) && $_FILES['favicon']['error'] === 0) {
             $upload = uploadImage($_FILES['favicon']);
             if ($upload['success']) {
+                // Delete old favicon if exists
+                if ($settings && !empty($settings['favicon_filename'])) {
+                    deleteImage($settings['favicon_filename']);
+                }
                 $favicon_filename = $upload['filename'];
                 $favicon_url = $upload['url'];
             } else {

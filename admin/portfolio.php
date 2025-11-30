@@ -15,13 +15,13 @@ if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $item = $conn->query("SELECT featured_image_filename FROM portfolio_items WHERE id = $id")->fetch_assoc();
     if ($item && $item['featured_image_filename']) {
-        deleteImage($item['featured_image_filename'], '../uploads');
+        deleteImage($item['featured_image_filename']);
     }
     // Delete associated images
     $images = $conn->query("SELECT image_filename FROM portfolio_images WHERE portfolio_id = $id");
     while ($img = $images->fetch_assoc()) {
         if ($img['image_filename']) {
-            deleteImage($img['image_filename'], '../uploads');
+            deleteImage($img['image_filename']);
         }
     }
     $conn->query("DELETE FROM portfolio_items WHERE id = $id");
@@ -33,7 +33,7 @@ if (isset($_GET['delete_image'])) {
     $image_id = intval($_GET['delete_image']);
     $image = $conn->query("SELECT image_filename, portfolio_id FROM portfolio_images WHERE id = $image_id")->fetch_assoc();
     if ($image && $image['image_filename']) {
-        deleteImage($image['image_filename'], '../uploads');
+        deleteImage($image['image_filename']);
     }
     $conn->query("DELETE FROM portfolio_images WHERE id = $image_id");
     $message = '<div class="alert alert-success">Image deleted.</div>';
@@ -48,11 +48,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $link = $conn->real_escape_string($_POST['link']);
     $featured_image_url = $conn->real_escape_string($_POST['featured_image_url']);
     $featured_image_filename = '';
+    $status = isset($_POST['status']) ? $conn->real_escape_string($_POST['status']) : 'published';
+    $is_featured = isset($_POST['is_featured']) ? 1 : 0;
     
     // Handle featured image upload
     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === 0) {
-        $upload = uploadImage($_FILES['featured_image'], '../uploads');
+        $upload = uploadImage($_FILES['featured_image']);
         if ($upload['success']) {
+            // Delete old image if exists
+            if (isset($_POST['id']) && $_POST['id']) {
+                $old_item = $conn->query("SELECT featured_image_filename FROM portfolio_items WHERE id = " . intval($_POST['id']))->fetch_assoc();
+                if ($old_item && !empty($old_item['featured_image_filename'])) {
+                    deleteImage($old_item['featured_image_filename']);
+                }
+            }
             $featured_image_filename = $upload['filename'];
             $featured_image_url = $upload['url'];
         } else {
@@ -63,14 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (isset($_POST['id']) && $_POST['id']) {
         $id = intval($_POST['id']);
         if ($featured_image_filename) {
-            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', featured_image_filename='$featured_image_filename' WHERE id=$id");
+            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', featured_image_filename='$featured_image_filename', status='$status', is_featured=$is_featured WHERE id=$id");
         } else {
-            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url' WHERE id=$id");
+            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', status='$status', is_featured=$is_featured WHERE id=$id");
         }
         $message = '<div class="alert alert-success">Portfolio item updated.</div>';
+        ErrorLogger::log("Portfolio item updated: ID $id, Status: $status, Featured: $is_featured", 'INFO');
     } else {
-        $conn->query("INSERT INTO portfolio_items (title, description, body, category, link, featured_image_url, featured_image_filename) VALUES ('$title', '$description', '$body', '$category', '$link', '$featured_image_url', '$featured_image_filename')");
+        $conn->query("INSERT INTO portfolio_items (title, description, body, category, link, featured_image_url, featured_image_filename, status, is_featured) VALUES ('$title', '$description', '$body', '$category', '$link', '$featured_image_url', '$featured_image_filename', '$status', $is_featured)");
         $message = '<div class="alert alert-success">Portfolio item added.</div>';
+        ErrorLogger::log("Portfolio item created: $title, Status: $status", 'INFO');
     }
 }
 
@@ -82,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $image_filename = '';
     
     if (isset($_FILES['portfolio_image']) && $_FILES['portfolio_image']['error'] === 0) {
-        $upload = uploadImage($_FILES['portfolio_image'], '../uploads');
+        $upload = uploadImage($_FILES['portfolio_image']);
         if ($upload['success']) {
             $image_filename = $upload['filename'];
             $image_url = $upload['url'];
@@ -120,57 +131,23 @@ if (isset($_GET['edit'])) {
         .ql-editor { min-height: 300px; }
         .portfolio-image-preview { max-width: 100px; height: auto; border-radius: 5px; }
         .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
-        .image-item { position: relative; border-radius: 5px; overflow: hidden; }
-        .image-item img { width: 100%; height: 120px; object-fit: cover; }
-        .image-item .delete-btn { position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 12px; }
+        .image-item { position: relative; border-radius: 5px; overflow: hidden; cursor: grab; transition: all 0.2s ease; }
+        .image-item:active { cursor: grabbing; }
+        .image-item.drag-over { opacity: 0.5; transform: scale(0.95); }
+        .image-item-inner { position: relative; width: 100%; height: 120px; }
+        .image-item img { width: 100%; height: 100%; object-fit: cover; }
+        .image-item-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: space-between; padding: 5px; opacity: 0; transition: opacity 0.3s ease; }
+        .image-item:hover .image-item-overlay { opacity: 1; }
+        .drag-handle { color: white; font-size: 16px; font-weight: bold; cursor: grab; }
+        .image-item:active .drag-handle { cursor: grabbing; }
+        .image-item .delete-btn { background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 12px; transition: background 0.2s ease; }
+        .image-item .delete-btn:hover { background: rgba(255,0,0,1); }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block bg-dark sidebar">
-                <div class="position-sticky pt-3">
-                    <h5 class="text-white px-3 mb-4">Admin Panel</h5>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php">
-                                <i class="fas fa-chart-line"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo SITE_URL; ?>/admin/portfolio.php">
-                                <i class="fas fa-briefcase"></i> Portfolio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/services.php">
-                                <i class="fas fa-cogs"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/about.php">
-                                <i class="fas fa-user"></i> About
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/messages.php">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/social.php">
-                                <i class="fas fa-share-alt"></i> Social Links
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include '../includes/admin-sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4">
@@ -195,37 +172,37 @@ if (isset($_GET['edit'])) {
                                     
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title</label>
-                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $edit_item ? htmlspecialchars($edit_item['title']) : ''; ?>" required>
+                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $edit_item && !empty($edit_item['title']) ? htmlspecialchars($edit_item['title']) : ''; ?>" required>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Short Description</label>
-                                        <textarea class="form-control" id="description" name="description" rows="2" required><?php echo $edit_item ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="2" required><?php echo $edit_item && !empty($edit_item['description']) ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
                                         <small class="text-muted">This appears on the portfolio list page</small>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="body" class="form-label">Full Description (Rich Text)</label>
                                         <div id="editor" style="background: white;"></div>
-                                        <textarea id="body" name="body" style="display:none;"><?php echo $edit_item ? htmlspecialchars($edit_item['body']) : ''; ?></textarea>
+                                        <textarea id="body" name="body" style="display:none;"></textarea>
                                         <small class="text-muted">This appears on the project detail page</small>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="category" class="form-label">Category</label>
-                                        <input type="text" class="form-control" id="category" name="category" value="<?php echo $edit_item ? htmlspecialchars($edit_item['category']) : ''; ?>">
+                                        <input type="text" class="form-control" id="category" name="category" value="<?php echo $edit_item && !empty($edit_item['category']) ? htmlspecialchars($edit_item['category']) : ''; ?>">
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="link" class="form-label">Project Link</label>
-                                        <input type="url" class="form-control" id="link" name="link" value="<?php echo $edit_item ? htmlspecialchars($edit_item['link']) : ''; ?>">
+                                        <input type="url" class="form-control" id="link" name="link" value="<?php echo $edit_item && !empty($edit_item['link']) ? htmlspecialchars($edit_item['link']) : ''; ?>">
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="featured_image" class="form-label">Featured Image (Displayed on Portfolio List)</label>
                                         <input type="file" class="form-control" id="featured_image" name="featured_image" accept="image/*">
                                         <small class="text-muted">Max 5MB. Recommended: 600x400px</small>
-                                        <?php if ($edit_item && $edit_item['featured_image_url']): ?>
+                                        <?php if ($edit_item && !empty($edit_item['featured_image_url'])): ?>
                                             <div class="mt-2">
                                                 <img src="<?php echo htmlspecialchars($edit_item['featured_image_url']); ?>" alt="Featured" class="portfolio-image-preview">
                                             </div>
@@ -234,7 +211,28 @@ if (isset($_GET['edit'])) {
 
                                     <div class="mb-3">
                                         <label for="featured_image_url" class="form-label">Or Featured Image URL</label>
-                                        <input type="url" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
+                                        <input type="url" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item && !empty($edit_item['featured_image_url']) ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="status" class="form-label">Status</label>
+                                            <select class="form-control" id="status" name="status" required>
+                                                <option value="published" <?php echo (!$edit_item || $edit_item['status'] === 'published') ? 'selected' : ''; ?>>Published</option>
+                                                <option value="draft" <?php echo ($edit_item && $edit_item['status'] === 'draft') ? 'selected' : ''; ?>>Draft</option>
+                                            </select>
+                                            <small class="text-muted">Published items are visible on the portfolio page</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Options</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" <?php echo ($edit_item && $edit_item['is_featured']) ? 'checked' : ''; ?>>
+                                                <label class="form-check-label" for="is_featured">
+                                                    Featured Work
+                                                </label>
+                                            </div>
+                                            <small class="text-muted d-block">Featured items appear in the featured works section</small>
+                                        </div>
                                     </div>
 
                                     <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
@@ -264,96 +262,181 @@ if (isset($_GET['edit'])) {
 
                                     <div class="mb-3">
                                         <label for="alt_text" class="form-label">Alt Text (for accessibility)</label>
-                                        
-l>y>
-</htmbodript>
-</</sc
-     });L;
-       erHTMll.root.innvalue = quiody').ById('blementtEdocument.ge     ) {
-       function(r('submit', entListene').addEvctor('formrySelement.que   docu    ion
- ssubmi sre formfoarea be hidden text   // Update   f; ?>
+                                        <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image" value="">
+                                    </div>
 
-  ndi?php e     <); ?>;
-   'body']_item[edit_encode($ json?php echoHTML = <nnerot.irouill.        q
-y']): ?>item['bodit_em && $edt_it if ($edihp      <?pntent
-  sting co// Load exi  
+                                    <button type="submit" class="btn btn-success">Add Image</button>
+                                </form>
 
-              });    }
+                                <!-- Display Gallery -->
+                                <?php
+                                $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = " . $edit_item['id'] . " ORDER BY sort_order");
+                                if ($images->num_rows > 0):
+                                ?>
+                                <div class="image-gallery" id="sortableGallery">
+                                    <?php while ($img = $images->fetch_assoc()): ?>
+                                    <?php if (!empty($img['image_url'])): ?>
+                                    <div class="image-item" draggable="true" data-image-id="<?php echo $img['id']; ?>">
+                                        <div class="image-item-inner">
+                                            <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
+                                            <div class="image-item-overlay">
+                                                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                                                <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php endwhile; ?>
+                                </div>
+                                <small class="text-muted d-block mt-2">💡 Drag images to reorder the gallery</small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
 
-          ]              'clean']
-     [           eo'],
-    ide', 'vink', 'imag       ['l          ' }],
-   'bullet{ 'list': , ed'}st': 'order 'li  [{               ock'],
-    'code-blte',lockquo      ['b         '],
-     strikeine', 'c', 'underl, 'itali   ['bold'            ,
-     3, false] }]: [1, 2, eader'     [{ 'h         
-      r: [  toolba          : {
-        modules        ow',
-e: 'snhem         ttor', {
-   di Quill('#el = new var quil
-        editorlize Quill/ Initia        /ipt>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Portfolio Items</h5>
+                            </div>
+                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                                <div style="font-size: 0.85rem;">
+                                    <?php
+                                    $result = $conn->query("SELECT * FROM portfolio_items ORDER BY is_featured DESC, created_at DESC");
+                                    while ($item = $result->fetch_assoc()):
+                                    ?>
+                                        <div class="card mb-2">
+                                            <div class="card-body p-2">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <h6 class="mb-0"><?php echo htmlspecialchars(substr($item['title'] ?? 'Untitled', 0, 20)); ?></h6>
+                                                        <small class="text-muted"><?php echo !empty($item['category']) ? htmlspecialchars($item['category']) : '—'; ?></small>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <?php if ($item['is_featured']): ?>
+                                                        <span class="badge bg-warning text-dark">⭐ Featured</span>
+                                                    <?php endif; ?>
+                                                    <?php if ($item['status'] === 'draft'): ?>
+                                                        <span class="badge bg-secondary">Draft</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-success">Published</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="btn-group btn-group-sm w-100" role="group">
+                                                    <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                                    <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
-    <scr"></script>se.min.jstrap.bundlist/js/boot@5.3.0/drapstt/npm/bootjsdelivr.ne://cdn. src="httpsript>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize Quill editor
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'image', 'video'],
+                    ['clean']
+                ]
+            }
+        });
 
-    <scdiv
-    </v>     </diin>
-           </ma>
-    /div <              iv>
- /d <                   
- </div>                   
-    </div>                         e>
-   tabl  </                        
-      y>od        </tb                   
-         dwhile; ?>    <?php en                              >
-      tr    </                                 td>
-          </                                            
- ">Delete</a>Delete?')rn confirm('click="retuger" onm btn-dantn-sbtn blass="']; ?>" co $item['id ech?php?delete=<a href="     <                                           
-    >Edit</a>-warning"m btn"btn btn-ss= ?>" clasd'];em['icho $it<?php e"?edit=<a href=                                                   d>
- <t                                              /td>
-  ']); ?><goryaters($item['cmlspecialchaphp echo ht<td><?                                                >
-</td 15)); ?>tle'], 0,tir($item['chars(substlspecialhp echo htm<td><?p                                            >
-          <tr                                 
-             ?>                                _assoc()):
-->fetch$result ($item = le    whi                                 C");
-   t DEScreated_aORDER BY items o_tfoliporROM  * FELECT->query("S $connesult =     $r                        
-           ?php  <                             >
-            <tbody                           >
-         </thead                            >
-     </tr                                        th>
->Actions</  <th                                        ory</th>
-  eg<th>Cat                                         
-   itle</th>>Tth           <                             tr>
-            <                              thead>
-          <                       ">
-     ble-smable talass="table c    <t                        ">
-    auto;-y:  overflow 600px;-height:yle="maxbody" stass="card-  <div cl                     
-         </div>              
-           Items</h5>5>Portfolio       <h                      ">
-   rd-headerass="cacl    <div                         ">
-="cardlass      <div c              
-    d-4">"col-mclass=div    <                 >
+        // Load existing content
+        <?php if ($edit_item && !empty($edit_item['body'])): ?>
+        quill.root.innerHTML = <?php echo json_encode($edit_item['body']); ?>;
+        <?php endif; ?>
 
-  </div              >
-    p endif; ?  <?ph                      </div>
-              
-          v>        </di                    if; ?>
- <?php end                             </div>
-                                  ?>
- dwhile;en <?php                             v>
-       di    </                           
-     ete</a>>Del image?')"lete thisconfirm('Deturn k="re" onclicelete-btn"d class=?>"id']; mg['o $ich<?php eete_image=href="?del   <a                                     ]); ?>">
- t_text'g['al($imharslclspecia htm<?php echo>" alt="; ?])age_url'rs($img['imialchatmlspec echo h src="<?php      <img                            ">
-      e-itemss="imagclaiv  <d                                  : ?>
- oc())s->fetch_ass= $imagewhile ($img hp ?p        <                         
-   gallery">s="image-   <div clas                    >
-                  ?                       ws > 0):
->num_ro$images-      if (                     ;
-     rder")ort_oR BY s. " ORDE['id'] $edit_item" . = d  portfolio_is WHEREimagetfolio_M porFROSELECT * ("conn->query $images = $                          <?php
-                                  ery -->
-    Gallayspl- Di      <!-                    
+        // Update hidden textarea before form submission
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('body').value = quill.root.innerHTML;
+        });
 
-      /form>         <                  >
-     mage</buttonAdd Iccess">"btn btn-sut" class=ubmi="son type <butt                                   </div>
+        // Drag and drop reordering
+        let draggedElement = null;
 
-                                
-    the image">"Describe older=xt" placeh="alt_te" nametext" id="alt_ntrols="form-coext" claspe="t<input ty
+        const gallery = document.getElementById('sortableGallery');
+        if (gallery) {
+            const items = gallery.querySelectorAll('.image-item');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedElement = this;
+                    this.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', function(e) {
+                    this.style.opacity = '1';
+                    items.forEach(i => i.classList.remove('drag-over'));
+                    draggedElement = null;
+                });
+
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (this !== draggedElement) {
+                        this.classList.add('drag-over');
+                    }
+                });
+
+                item.addEventListener('dragleave', function(e) {
+                    this.classList.remove('drag-over');
+                });
+
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (this !== draggedElement) {
+                        // Swap elements
+                        gallery.insertBefore(draggedElement, this);
+                        updateImageOrder();
+                    }
+                    this.classList.remove('drag-over');
+                });
+            });
+        }
+
+        function updateImageOrder() {
+            const items = document.querySelectorAll('#sortableGallery .image-item');
+            const order = [];
+            items.forEach((item, index) => {
+                order.push({
+                    id: item.dataset.imageId,
+                    sort_order: index
+                });
+            });
+
+            // Send order to server
+            fetch('<?php echo SITE_URL; ?>/admin/update-image-order.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ images: order })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Image order updated');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

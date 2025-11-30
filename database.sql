@@ -5,7 +5,25 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    phone VARCHAR(20),
+    bio TEXT,
+    avatar_url VARCHAR(255),
+    avatar_filename VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS website_settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    logo_url VARCHAR(255),
+    logo_filename VARCHAR(255),
+    favicon_url VARCHAR(255),
+    favicon_filename VARCHAR(255),
+    website_name VARCHAR(200),
+    website_description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS portfolio_items (
@@ -17,6 +35,8 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
     featured_image_filename VARCHAR(255),
     category VARCHAR(100),
     link VARCHAR(255),
+    status ENUM('draft', 'published') DEFAULT 'published',
+    is_featured BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -38,6 +58,7 @@ CREATE TABLE IF NOT EXISTS services (
     description TEXT NOT NULL,
     icon VARCHAR(100),
     tech_icons TEXT,
+    status ENUM('draft', 'published') DEFAULT 'published',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -72,9 +93,36 @@ CREATE TABLE IF NOT EXISTS social_links (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin user (password: admin123)
+CREATE TABLE IF NOT EXISTS testimonials (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    client_name VARCHAR(100) NOT NULL,
+    client_title VARCHAR(100),
+    client_company VARCHAR(100),
+    client_image_url VARCHAR(255),
+    client_image_filename VARCHAR(255),
+    testimonial_text TEXT NOT NULL,
+    rating INT DEFAULT 5,
+    is_featured BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_ratings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    portfolio_id INT NOT NULL,
+    rating INT NOT NULL,
+    review_text TEXT,
+    reviewer_name VARCHAR(100),
+    reviewer_email VARCHAR(100),
+    is_approved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolio_items(id) ON DELETE CASCADE
+);
+
+-- Insert default admin user (password: Admin.123)
 INSERT INTO users (username, password, email) VALUES 
-('admin', '$2y$10$YIjlrDxR8.8Yd8Yd8Yd8eYIjlrDxR8.8Yd8Yd8Yd8eYIjlrDxR8.8', 'admin@portfolio.com');
+('admin', '$2y$10$a1ZlQ3AAVlETr2XWM9MrsOxhlOelw9Vxqg0Kcj08T7a9Rnr4MjHB.', 'admin@portfolio.com');
 
 -- Insert sample data
 INSERT INTO services (title, description, icon, tech_icons) VALUES 
@@ -90,3 +138,13 @@ INSERT INTO social_links (platform, url, icon) VALUES
 ('Instagram', 'https://instagram.com', 'fab fa-instagram'),
 ('GitHub', 'https://github.com', 'fab fa-github'),
 ('Twitter', 'https://twitter.com', 'fab fa-twitter');
+
+-- Insert default website settings
+INSERT INTO website_settings (website_name, website_description) VALUES 
+('My Portfolio', 'A professional portfolio website showcasing my work and skills');
+
+-- Insert sample testimonials
+INSERT INTO testimonials (client_name, client_title, client_company, testimonial_text, rating, is_featured, is_active) VALUES 
+('Sarah Johnson', 'Marketing Director', 'Tech Innovations Inc', 'Exceptional work! The website redesign exceeded our expectations. Highly professional and responsive to feedback.', 5, TRUE, TRUE),
+('Michael Chen', 'CEO', 'Digital Solutions Ltd', 'Outstanding developer. Delivered the project on time and with excellent attention to detail. Highly recommended!', 5, TRUE, TRUE),
+('Emma Williams', 'Product Manager', 'Creative Agency Co', 'Great communication and technical expertise. The final product was exactly what we envisioned.', 5, FALSE, TRUE);

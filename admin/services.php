@@ -113,20 +113,20 @@ if (isset($_GET['edit'])) {
                                     <?php endif; ?>
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title</label>
-                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $edit_item ? htmlspecialchars($edit_item['title']) : ''; ?>" required>
+                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $edit_item && !empty($edit_item['title']) ? htmlspecialchars($edit_item['title']) : ''; ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
-                                        <textarea class="form-control" id="description" name="description" rows="3" required><?php echo $edit_item ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="3" required><?php echo $edit_item && !empty($edit_item['description']) ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="icon" class="form-label">Service Icon (Font Awesome)</label>
-                                        <input type="text" class="form-control" id="icon" name="icon" value="<?php echo $edit_item ? htmlspecialchars($edit_item['icon']) : ''; ?>" placeholder="fa-palette">
+                                        <input type="text" class="form-control" id="icon" name="icon" value="<?php echo $edit_item && !empty($edit_item['icon']) ? htmlspecialchars($edit_item['icon']) : ''; ?>" placeholder="fa-palette">
                                         <small class="text-muted">e.g., fa-palette, fa-code, fa-pencil-ruler</small>
                                     </div>
                                     <div class="mb-3">
                                         <label for="tech_icons" class="form-label">Technology Icons (Comma Separated)</label>
-                                        <textarea class="form-control" id="tech_icons" name="tech_icons" rows="2" placeholder="fab fa-php, fab fa-js, fab fa-react, fab fa-laravel"><?php echo $edit_item ? htmlspecialchars($edit_item['tech_icons']) : ''; ?></textarea>
+                                        <textarea class="form-control" id="tech_icons" name="tech_icons" rows="2" placeholder="fab fa-php, fab fa-js, fab fa-react, fab fa-laravel"><?php echo $edit_item && !empty($edit_item['tech_icons']) ? htmlspecialchars($edit_item['tech_icons']) : ''; ?></textarea>
                                         <small class="text-muted">Enter Font Awesome icon classes separated by commas. These appear after the description.</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
@@ -158,8 +158,8 @@ if (isset($_GET['edit'])) {
                                         while ($item = $result->fetch_assoc()):
                                         ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars($item['title']); ?></td>
-                                                <td><i class="fas <?php echo htmlspecialchars($item['icon']); ?>"></i></td>
+                                                <td><?php echo !empty($item['title']) ? htmlspecialchars($item['title']) : '—'; ?></td>
+                                                <td><?php if (!empty($item['icon'])): ?><i class="fas <?php echo htmlspecialchars($item['icon']); ?>"></i><?php else: ?>—<?php endif; ?></td>
                                                 <td>
                                                     <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
                                                     <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</a>

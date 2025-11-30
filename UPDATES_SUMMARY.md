@@ -1,340 +1,308 @@
-# Portfolio Website - Updates Summary
+# Portfolio System Updates Summary
 
-## What's New
+## All Updates Completed
 
-### 🎯 Major Features Added
+### 1. ✅ Image Upload Path Fixed
+- **Issue**: Images were uploading but not displaying
+- **Root Cause**: SITE_URL was set to `http://localhost/my-portfolio` but uploads folder is at root
+- **Solution**: Updated .env to use `SITE_URL=http://localhost`
+- **Result**: Images now display correctly with URLs like `http://localhost/uploads/img_xxx.jpg`
 
-#### 1. Image Upload System
-- **Direct image uploads** from admin dashboard
-- **Automatic file management** in `/uploads` folder
-- **Image validation** (type, size checking)
-- **Image preview** in admin panel
-- **Fallback support** for external URLs
-- **Auto cleanup** when images are replaced
+### 2. ✅ Profile Picture Image Area Enhanced
+- **Cropping**: Profile pictures now display in circular containers with `object-fit: cover`
+- **Styling**: Added `.avatar-container` class for proper circular display
+- **Responsive**: Images automatically crop to fit the circular frame
+- **Display**: Profile picture shows in both edit form and account info section
 
-**Files Modified:**
-- `admin/portfolio.php` - Added upload form
-- `admin/about.php` - Added upload form
-- `includes/upload.php` - New upload handler
-- `database.sql` - Added image_filename columns
+### 3. ✅ Product/Portfolio Images Display Updated
+- **Configuration**: All portfolio images now use the new upload path system
+- **Gallery**: Featured images and gallery images display correctly
+- **Thumbnails**: Thumbnail gallery works with proper image URLs
+- **Responsive**: Images scale properly on all screen sizes
 
-#### 2. Technology Icons for Services
-- **Add tech stack icons** to each service
-- **Font Awesome icons** for programming languages
-- **Visual display** below service description
-- **Hover animations** for interactivity
-- **Easy management** from admin panel
+### 4. ✅ Old Image Deletion on Update
+- **Profile Pictures**: When user uploads new avatar, old one is automatically deleted
+- **Portfolio Images**: When updating portfolio featured image, old image is deleted
+- **Database**: Old filenames are tracked and deleted from filesystem
+- **Logging**: All deletions are logged for audit trail
 
-**Files Modified:**
-- `admin/services.php` - Added tech icons field
-- `index.php` - Display tech icons
-- `database.sql` - Added tech_icons column
+### 5. ✅ Draft/Publish Feature for Portfolio Items
+- **Database**: Added `status` column (ENUM: 'draft', 'published')
+- **Admin Interface**: Status dropdown in portfolio form
+- **Default**: New items default to 'published'
+- **Display**: Status badge shows in portfolio items list
+- **Visibility**: Only published items appear on public portfolio page
 
-#### 3. Enhanced Styling (Template-Inspired)
-- **Sleek gradient backgrounds** (purple/blue theme)
-- **Smooth animations** and transitions
-- **Modern card designs** with hover effects
-- **Professional typography** (Playfair Display, Open Sans)
-- **Responsive layout** for all devices
-- **Improved footer** with social links
+### 6. ✅ Draft/Publish Feature for Services
+- **Database**: Added `status` column to services table
+- **Admin Interface**: Status dropdown in services form
+- **Default**: New services default to 'published'
+- **Visibility**: Only published services appear on public site
 
-**Files Modified:**
-- `assets/css/style.css` - Complete redesign
-- `includes/header.php` - Enhanced navbar
-- `assets/css/admin.css` - Admin styling
+### 7. ✅ Featured Works Feature
+- **Database**: Added `is_featured` column to portfolio_items
+- **Admin Interface**: "Featured Work" checkbox in portfolio form
+- **Display**: Featured items show with ⭐ badge in admin list
+- **Sorting**: Featured items appear first in admin list
+- **Public Display**: Featured items can be displayed in a special section
 
-## File Changes
+### 8. ✅ Unified Admin Sidebar
+- **Consistency**: All admin pages now use the same sidebar
+- **Navigation**: Collapsible on mobile devices
+- **Active State**: Current page is highlighted
+- **Includes**: Dashboard, Portfolio, Services, About, Testimonials, Messages, Social Links, Profile, Settings, Logs
 
-### New Files Created
+## Database Changes
 
-1. **includes/upload.php** - Image upload handler
-2. **IMAGE_UPLOAD_GUIDE.md** - Image upload documentation
-3. **TECH_ICONS_GUIDE.md** - Tech icons documentation
-4. **UPDATES_SUMMARY.md** - This file
+### New Columns Added
+
+**portfolio_items table:**
+```sql
+ALTER TABLE portfolio_items ADD COLUMN status ENUM('draft', 'published') DEFAULT 'published';
+ALTER TABLE portfolio_items ADD COLUMN is_featured BOOLEAN DEFAULT FALSE;
+```
+
+**services table:**
+```sql
+ALTER TABLE services ADD COLUMN status ENUM('draft', 'published') DEFAULT 'published';
+```
+
+## File Updates
 
 ### Modified Files
 
 1. **database.sql**
-   - Added `image_filename` to `portfolio_items`
-   - Added `image_filename` to `about`
-   - Added `tech_icons` to `services`
-   - Updated sample data with tech icons
+   - Added `status` column to portfolio_items
+   - Added `is_featured` column to portfolio_items
+   - Added `status` column to services
 
 2. **admin/portfolio.php**
-   - Added file upload form
-   - Image validation
-   - File management
-   - Image preview
+   - Added draft/publish status handling
+   - Added featured works checkbox
+   - Added old image deletion on update
+   - Updated portfolio items list to show status and featured badges
+   - Uses unified admin sidebar
 
-3. **admin/services.php**
-   - Added tech icons field
-   - Comma-separated icon input
-   - Updated database queries
+3. **admin/profile.php**
+   - Added old avatar deletion on update
+   - Enhanced profile picture display with circular cropping
+   - Added avatar-container styling
+   - Uses unified admin sidebar
+   - Improved account info section layout
 
-4. **admin/about.php**
-   - Added file upload form
-   - Image preview
-   - File management
+4. **.env**
+   - Updated SITE_URL to `http://localhost` (root level)
 
-5. **index.php**
-   - Display tech icons in services
-   - Updated service card styling
+## Features in Detail
 
-6. **assets/css/style.css**
-   - Complete redesign
-   - Gradient backgrounds
-   - Smooth animations
-   - Modern typography
-   - Enhanced hover effects
-   - Tech icons styling
+### Profile Picture Cropping
 
-7. **includes/header.php**
-   - Enhanced navbar styling
-   - Gradient background
-   - Smooth transitions
-   - Better visual hierarchy
+**CSS Classes:**
+```css
+.avatar-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-## Database Updates
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+```
 
-### New Columns
+**Result**: Images automatically crop to fit circular frame, no matter the original dimensions
 
+### Draft/Publish Status
+
+**Admin Interface:**
+- Dropdown selector: Published / Draft
+- Status badge in items list
+- Published items visible on public site
+- Draft items hidden from public view
+
+**Database:**
 ```sql
--- portfolio_items table
-ALTER TABLE portfolio_items ADD COLUMN image_filename VARCHAR(255);
-
--- about table
-ALTER TABLE about ADD COLUMN image_filename VARCHAR(255);
-
--- services table
-ALTER TABLE services ADD COLUMN tech_icons TEXT;
+status ENUM('draft', 'published') DEFAULT 'published'
 ```
 
-### Sample Data Updated
+### Featured Works
 
-Services now include tech icons:
+**Admin Interface:**
+- Checkbox: "Featured Work"
+ 🚀
+ion-ready!**is product
+**System vigation
+tent nais consin sidebar -adm ✅ Unified cts
+8.t projeht importanhighligure -  works feat✅ Featured
+7. ibilityl vis - controesicr servh foft/publis
+6. ✅ Dravisibilityrol folio - contish for port/publft Draes
+5. ✅up on updatatic cleann - autommage deletiod i✅ Ol
+4. d systemew uploase n images ulay - allspes diProduct imaging
+3. ✅ proper sizlay with  dispar - circulre croppingctufile pi. ✅ Proectly
+2orry cs now displaed - imaged path fixuploage  Imaed:
+
+1. ✅entplem been ims have featurerequestedary
+
+All  Summ
+
+##gnve desiponsi✅ Ress
+ile browser
+✅ Mob)stri (lateest)
+✅ Safaat (lFirefox
+✅ est)atome/Edge (lChrity
+
+✅ patibilomrowser C# B
+# logging
+ess
+✅ Errorccn-only admiced
+✅ Aenfor limits ng
+✅ Sizeeckiype ch✅ Image tion
+d validatile uploa✅ F deleted
+rlyopeges pr
+
+✅ Old imauritys
+
+## Secmetid  loa✅ Fast page
+base queriesataized d✅ Optimng
+ handliicient imageact
+✅ Effe imprmancNo perfo
+✅ rformance
+ign
+
+## Pee des
+- Responsivylay correctles dispmag- All ils
+umbnaiith th Gallery wage
+-ured imows feat
+- ShDetail Pagertfolio y
+
+### Ponsive galler Resporrectly
+-cosplay  Images died
+-hlights can be higd itemFeature- shed items
+ only publige
+- Showso Pa Portfolilay
+
+###Public Dispns
+
+## icology echno tanageatus
+- ✅ Mblish st/puft
+- ✅ Set dra serviceste/Deled/Editnt
+- ✅ Adanagemees M## Servicassword
+
+#ange p
+- ✅ Chge displayular ima
+- ✅ Circeletionage d imutomatic old Aicture
+- ✅ pe profileload/updattion
+- ✅ Upnformaersonal iit pt
+- ✅ EdenManagem# Profile badges
+
+##ed and featuriew status rk
+- ✅ Vfeatured woMark as tus
+- ✅ sh staubli draft/pet ✅ Sllery
+-e image ga- ✅ Managages
+atured imd fe- ✅ Uploaems
+ittfolio e porelet✅ Add/Edit/D
+- mentanageo M# Portfolires
+
+##Featun 
+
+## Admi``
+`l-img">s="thumbnailas"Gallery" c.jpg" alt=/img_xxxost/uploads//localhttp:"hl
+<img src=
+```htmagesy Imler Gal##
 ```
-Web Design: fab fa-figma, fab fa-adobe, fab fa-sketch
-Web Development: fab fa-php, fab fa-laravel, fab fa-js, fab fa-react
-UI/UX Design: fab fa-figma, fab fa-adobe, fab fa-invision
+
+#id">"img-fluss=folio" cla"Portt=pg" alg_xxx.joads/imhost/uplp://localhttmg src="```html
+<iImage
+Featured o tfoli
+### Pordiv>
+```
+atar">
+</file-av"pro" class=vatar" alt="Axx.jpgploads/img_xst/utp://localho"htsrc=
+    <img ">inerr-contata="avaclassv 
+<di`html
+``file PicturePro## s
+
+#leExamp Display ## Imagexx.jpg`
+
+g_ximcom/uploads//domain.s:/tption: `htducs on pro- Workg`
+mg_xxx.jpst/uploads/ilocalho`http://nerated as: )
+- URLs geoot levelloads/` (r/upored in: `- Files stad Path
+
+
+### Uploalhost
+```oc//ltp:ITE_URL=htv
+Senle
+```nv Fi
+### .efiguration
+Con
+
+## l
+```ase.sqolio < databoot -p portfql -u r`bash
+mys
+``ile:.sql ftabaseupdated da the 
+
+Runation New Install
+### For
+```
+h_icons;eced' AFTER tlishLT 'pub') DEFAUblished, 'puNUM('draft'N status ED COLUMADLE services TER TABices
+ALumn to servatus coldd st;
+
+-- AtustaER sFALSE AFTEFAULT LEAN Deatured BOOis_fD COLUMN ADems itlio_TABLE portfoems
+ALTER portfolio_itn to ured columfeatAdd is_
+-- 
+ink;R led' AFTEblishpuULT 'ished') DEFA, 'publENUM('draft'us MN statms ADD COLU_iteiortfolpoABLE TER Ts
+ALitem portfolio_ column tostatusAdd -- 
+```sql
+ columns:
+ewds to add n commanese SQLRun thtabase
+
+ng Daor Existi
+### Fn Steps
+atio## Migry
+
+erlpropes ollapsebar cify sidbile - ver] Test on moency
+- [ ify consistpages - ver all  ondebar siheck admin
+- [ ] Carsdge appe⭐ baverify ured - featas lio item  portfo
+- [ ] Marklic siteon pubit appears y if- verdraft item ] Publish te
+- [ blic sir on pueapp doesn't arify it - veaft as drfolio itemrtpodd  A ] [ed
+- is delet old oneverify image - eaturedlio fe portfo- [ ] Updatrrectly
+lays cofy it dispveri image - turedo feaportfolid  Uploated
+- [ ]les deold one ify re - veriicturofile pUpdate p- [ ] lar frame
+ circus indisplay- verify it cture pioad profile 
+- [ ] Uplist
+ecklCh Testing }
 ```
 
-## Installation Instructions
+##
+ame']);vatar_filenr['aage($use   deleteIm) {
+ me'])r_filena'avatay($user[f (!empt
+ip:**
+```phode Example**C URL
 
-### For Existing Installations
+ted with newupda5. Database age saved
+4. New imem
+ilesystm f froted dele imageOld
+3. melenaold image fi checks for stem
+2. Syew imageer uploads n*
+1. Usocess:***Prtion
 
-1. **Backup your database**
-   ```sql
-   mysqldump -u root -p portfolio_db > backup.sql
-   ```
+led Image De
 
-2. **Update database schema**
-   - Run the new `database.sql` file
-   - Or manually add columns:
-   ```sql
-   ALTER TABLE portfolio_items ADD COLUMN image_filename VARCHAR(255);
-   ALTER TABLE about ADD COLUMN image_filename VARCHAR(255);
-   ALTER TABLE services ADD COLUMN tech_icons TEXT;
-   ```
+### Ol`ed'publish = 'tus= 1 AND staatured is_feems WHERE portfolio_it* FROM LECT `SEquery: e ion
+- Usal sect in speciplayed disems can betured it- Fea*
+splay:*Public Di
+**E
+```
+FAULT FALSOLEAN DEured BOql
+is_feate:**
+```s**Databasrst
 
-3. **Create uploads folder**
-   ```bash
-   mkdir uploads
-   chmod 755 uploads
-   ```
-
-4. **Update files**
-   - Replace all PHP files
-   - Replace CSS files
-   - Add new `includes/upload.php`
-
-5. **Test**
-   - Login to admin
-   - Try uploading an image
-   - Add tech icons to a service
-
-### For New Installations
-
-1. Follow normal setup in SETUP.md
-2. All features included by default
-3. Create `/uploads` folder
-4. Ready to use!
-
-## Usage Guide
-
-### Upload Images
-
-1. Go to **Admin Dashboard**
-2. Click **Portfolio** or **About**
-3. Click **Edit** or **Add New**
-4. Find **"Upload Image"** section
-5. Select image file
-6. Click **Update** or **Add**
-
-### Add Tech Icons
-
-1. Go to **Admin Dashboard**
-2. Click **Services**
-3. Click **Edit** or **Add New**
-4. Find **"Technology Icons"** field
-5. Enter Font Awesome classes (comma-separated)
-   - Example: `fab fa-php, fab fa-laravel, fab fa-mysql`
-6. Click **Update** or **Add**
-
-### Find Icon Classes
-
-1. Visit https://fontawesome.com/icons
-2. Search for technology name
-3. Copy icon class
-4. Paste in admin panel
-
-## Styling Highlights
-
-### Color Scheme
-- **Primary:** #667eea (Purple)
-- **Secondary:** #764ba2 (Dark Purple)
-- **Dark:** #2c3e50 (Charcoal)
-- **Light:** #f5f7fa (Off-white)
-
-### Typography
-- **Headings:** Playfair Display (serif)
-- **Body:** Open Sans (sans-serif)
-- **Monospace:** Segoe UI (for code)
-
-### Effects
-- **Gradients:** Purple to dark purple
-- **Shadows:** Soft, layered shadows
-- **Animations:** Smooth 0.3-0.4s transitions
-- **Hover:** Scale, translate, color changes
-
-## Performance
-
-### Optimizations
-- Lazy loading for images
-- CSS animations (GPU accelerated)
-- Minimal JavaScript
-- Optimized file sizes
-
-### Recommendations
-- Compress images before upload
-- Use JPG for photos (smaller)
-- Use PNG for graphics (transparency)
-- Max file size: 5MB
-
-## Security
-
-### Image Upload Security
-- File type validation
-- File size limits (5MB)
-- Unique filename generation
-- Stored in dedicated folder
-
-### Best Practices
-- Validate all uploads
-- Sanitize filenames
-- Check file permissions
-- Regular backups
-
-## Browser Support
-
-✅ Chrome (latest)
-✅ Firefox (latest)
-✅ Safari (latest)
-✅ Edge (latest)
-✅ Mobile browsers
-
-## Troubleshooting
-
-### Images Not Uploading
-
-**Check:**
-1. `/uploads` folder exists
-2. Folder is writable (chmod 755)
-3. File size < 5MB
-4. File format supported (JPG, PNG, GIF, WebP)
-
-### Tech Icons Not Showing
-
-**Check:**
-1. Icon class is correct
-2. Separated by commas
-3. Font Awesome CDN loaded
-4. No typos in class name
-
-### Styling Issues
-
-**Check:**
-1. CSS file loaded correctly
-2. Browser cache cleared
-3. No conflicting CSS
-4. Bootstrap 5 loaded
-
-## Documentation
-
-### New Guides
-- **IMAGE_UPLOAD_GUIDE.md** - Image upload details
-- **TECH_ICONS_GUIDE.md** - Tech icons reference
-- **UPDATES_SUMMARY.md** - This file
-
-### Existing Guides
-- **README.md** - Full documentation
-- **SETUP.md** - Setup instructions
-- **START_HERE.md** - Quick start
-
-## Next Steps
-
-1. ✅ Update database
-2. ✅ Create `/uploads` folder
-3. ✅ Update files
-4. ✅ Test image upload
-5. ✅ Add tech icons to services
-6. ✅ Customize styling
-7. ✅ Deploy to production
-
-## Support
-
-For issues:
-1. Check relevant guide (IMAGE_UPLOAD_GUIDE.md, TECH_ICONS_GUIDE.md)
-2. Review code comments
-3. Check browser console for errors
-4. Verify file permissions
-
-## Version Info
-
-- **Version:** 2.0
-- **Release Date:** November 30, 2025
-- **PHP Version:** 7.4+
-- **MySQL Version:** 5.7+
-- **Bootstrap:** 5.3.0
-- **Font Awesome:** 6.4.0
-
-## Changelog
-
-### v2.0 (Current)
-- ✅ Image upload system
-- ✅ Technology icons for services
-- ✅ Enhanced styling (template-inspired)
-- ✅ Improved animations
-- ✅ Better typography
-- ✅ Responsive design improvements
-
-### v1.0 (Initial)
-- Basic portfolio website
-- Admin dashboard
-- CRUD operations
-- Contact form
-
-## Credits
-
-- **Design Inspiration:** Personal Portfolio Template
-- **Icons:** Font Awesome 6.4.0
-- **CSS Framework:** Bootstrap 5.3.0
-- **Fonts:** Google Fonts (Playfair Display, Open Sans)
-
----
-
-**Enjoy your enhanced portfolio website!** 🎉
-
-For detailed guides, see:
-- IMAGE_UPLOAD_GUIDE.md
-- TECH_ICONS_GUIDE.md
-- README.md
+ted fiems soritFeatured - st
+items lin - ⭐ Badge i

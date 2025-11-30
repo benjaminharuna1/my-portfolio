@@ -22,23 +22,33 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
                     <!-- Image Gallery -->
                     <div class="portfolio-gallery mb-5">
                         <div class="main-image-container mb-3">
-                            <img id="mainImage" src="<?php echo htmlspecialchars($portfolio['featured_image_url']); ?>" alt="<?php echo htmlspecialchars($portfolio['title']); ?>" class="img-fluid rounded" style="width: 100%; max-height: 600px; object-fit: cover;">
+                            <img id="mainImage" src="<?php echo htmlspecialchars($portfolio['featured_image_url'] ?? 'https://via.placeholder.com/800x600?text=No+Image'); ?>" alt="<?php echo htmlspecialchars($portfolio['title'] ?? 'Portfolio Item'); ?>" class="img-fluid rounded" style="width: 100%; max-height: 600px; object-fit: cover;">
+                            <div class="image-counter">
+                                <span id="currentImageNum">1</span> / <span id="totalImageNum"><?php echo ($images->num_rows + 1); ?></span>
+                            </div>
                         </div>
 
                         <!-- Thumbnail Gallery (Shopify/AliExpress Style) -->
-                        <?php if ($images->num_rows > 0): ?>
+                        <?php if ($images && $images->num_rows > 0): ?>
                         <div class="thumbnail-gallery">
-                            <div class="thumbnail-item active" onclick="changeImage('<?php echo htmlspecialchars($portfolio['featured_image_url']); ?>')">
+                            <?php if (!empty($portfolio['featured_image_url'])): ?>
+                            <div class="thumbnail-item" onclick="changeImage('<?php echo htmlspecialchars($portfolio['featured_image_url']); ?>', 1)">
                                 <img src="<?php echo htmlspecialchars($portfolio['featured_image_url']); ?>" alt="Featured" class="thumbnail-img">
                             </div>
+                            <?php endif; ?>
                             <?php
                             $images->data_seek(0);
+                            $index = 2;
                             while ($img = $images->fetch_assoc()):
+                                if (!empty($img['image_url'])):
                             ?>
-                            <div class="thumbnail-item" onclick="changeImage('<?php echo htmlspecialchars($img['image_url']); ?>')">
-                                <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo htmlspecialchars($img['alt_text']); ?>" class="thumbnail-img">
+                            <div class="thumbnail-item" onclick="changeImage('<?php echo htmlspecialchars($img['image_url']); ?>', <?php echo $index; ?>)">
+                                <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Gallery Image'); ?>" class="thumbnail-img">
                             </div>
-                            <?php endwhile; ?>
+                            <?php 
+                                endif;
+                                $index++; 
+                            endwhile; ?>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -46,32 +56,38 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
 
                 <div class="col-lg-4">
                     <div class="portfolio-info">
-                        <h1 class="mb-3"><?php echo htmlspecialchars($portfolio['title']); ?></h1>
+                        <h1 class="mb-3"><?php echo htmlspecialchars($portfolio['title'] ?? 'Portfolio Item'); ?></h1>
                         
-                        <?php if ($portfolio['category']): ?>
+                        <?php if (!empty($portfolio['category'])): ?>
                         <p class="text-muted mb-3">
                             <span class="badge bg-primary"><?php echo htmlspecialchars($portfolio['category']); ?></span>
                         </p>
                         <?php endif; ?>
 
+                        <?php if (!empty($portfolio['description'])): ?>
                         <p class="lead mb-4"><?php echo htmlspecialchars($portfolio['description']); ?></p>
+                        <?php endif; ?>
 
-                        <?php if ($portfolio['link']): ?>
+                        <?php if (!empty($portfolio['link'])): ?>
                         <a href="<?php echo htmlspecialchars($portfolio['link']); ?>" class="btn btn-primary btn-lg mb-4" target="_blank">
                             <i class="fas fa-external-link-alt"></i> View Project
                         </a>
                         <?php endif; ?>
 
                         <div class="portfolio-meta">
+                            <?php if (!empty($portfolio['created_at'])): ?>
                             <p><strong>Created:</strong> <?php echo date('M d, Y', strtotime($portfolio['created_at'])); ?></p>
+                            <?php endif; ?>
+                            <?php if (!empty($portfolio['updated_at'])): ?>
                             <p><strong>Last Updated:</strong> <?php echo date('M d, Y', strtotime($portfolio['updated_at'])); ?></p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Full Description -->
-            <?php if ($portfolio['body']): ?>
+            <?php if (!empty($portfolio['body'])): ?>
             <div class="row mb-5">
                 <div class="col-lg-8">
                     <div class="portfolio-body">
@@ -115,6 +131,18 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
 .main-image-container img {
     transition: transform 0.3s ease;
     cursor: zoom-in;
+}
+
+.image-counter {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .main-image-container img:hover {
@@ -277,15 +305,31 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
 </style>
 
 <script>
-function changeImage(imageUrl) {
+function changeImage(imageUrl, imageNum) {
     const mainImage = document.getElementById('mainImage');
     mainImage.src = imageUrl;
+    
+    // Reset zoom when changing image
+    mainImage.style.transform = 'scale(1)';
+    
+    // Update image counter
+    const currentNumEl = document.getElementById('currentImageNum');
+    if (currentNumEl) {
+        currentNumEl.textContent = imageNum;
+    }
     
     // Update active thumbnail
     document.querySelectorAll('.thumbnail-item').forEach(item => {
         item.classList.remove('active');
     });
-    event.target.closest('.thumbnail-item').classList.add('active');
+    
+    // Find and mark the clicked thumbnail as active
+    document.querySelectorAll('.thumbnail-item').forEach(item => {
+        const img = item.querySelector('.thumbnail-img');
+        if (img && img.src === imageUrl) {
+            item.classList.add('active');
+        }
+    });
 }
 
 // Zoom functionality
@@ -294,6 +338,14 @@ document.getElementById('mainImage').addEventListener('click', function() {
         this.style.transform = 'scale(1)';
     } else {
         this.style.transform = 'scale(1.5)';
+    }
+});
+
+// Initialize first thumbnail as active
+document.addEventListener('DOMContentLoaded', function() {
+    const firstThumbnail = document.querySelector('.thumbnail-item');
+    if (firstThumbnail) {
+        firstThumbnail.classList.add('active');
     }
 });
 </script>

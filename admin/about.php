@@ -114,33 +114,33 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
                                 <form method="POST" enctype="multipart/form-data">
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title</label>
-                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo htmlspecialchars($about['title']); ?>" required>
+                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $about && !empty($about['title']) ? htmlspecialchars($about['title']) : ''; ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="subtitle" class="form-label">Subtitle</label>
-                                        <input type="text" class="form-control" id="subtitle" name="subtitle" value="<?php echo htmlspecialchars($about['subtitle']); ?>" required>
+                                        <input type="text" class="form-control" id="subtitle" name="subtitle" value="<?php echo $about && !empty($about['subtitle']) ? htmlspecialchars($about['subtitle']) : ''; ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
-                                        <textarea class="form-control" id="description" name="description" rows="5" required><?php echo htmlspecialchars($about['description']); ?></textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="5" required><?php echo $about && !empty($about['description']) ? htmlspecialchars($about['description']) : ''; ?></textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($about['email']); ?>" required>
+                                        <input type="email" class="form-control" id="email" name="email" value="<?php echo $about && !empty($about['email']) ? htmlspecialchars($about['email']) : ''; ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="phone" class="form-label">Phone</label>
-                                        <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($about['phone']); ?>" required>
+                                        <input type="text" class="form-control" id="phone" name="phone" value="<?php echo $about && !empty($about['phone']) ? htmlspecialchars($about['phone']) : ''; ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="location" class="form-label">Location</label>
-                                        <input type="text" class="form-control" id="location" name="location" value="<?php echo htmlspecialchars($about['location']); ?>" required>
+                                        <input type="text" class="form-control" id="location" name="location" value="<?php echo $about && !empty($about['location']) ? htmlspecialchars($about['location']) : ''; ?>" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="image" class="form-label">Upload Image</label>
                                         <input type="file" class="form-control" id="image" name="image" accept="image/*">
                                         <small class="text-muted">Max 5MB. Formats: JPG, PNG, GIF, WebP</small>
-                                        <?php if ($about && $about['image_url']): ?>
+                                        <?php if ($about && !empty($about['image_url'])): ?>
                                             <div class="mt-2">
                                                 <img src="<?php echo htmlspecialchars($about['image_url']); ?>" alt="Current" style="max-width: 150px; border-radius: 5px;">
                                             </div>

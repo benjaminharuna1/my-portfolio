@@ -162,12 +162,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <label for="website_name" class="form-label">Website Name</label>
-                                        <input type="text" class="form-control" id="website_name" name="website_name" value="<?php echo htmlspecialchars($settings['website_name']); ?>" required>
+                                        <input type="text" class="form-control" id="website_name" name="website_name" value="<?php echo $settings && !empty($settings['website_name']) ? htmlspecialchars($settings['website_name']) : ''; ?>" required>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="website_description" class="form-label">Website Description</label>
-                                        <textarea class="form-control" id="website_description" name="website_description" rows="3"><?php echo htmlspecialchars($settings['website_description']); ?></textarea>
+                                        <textarea class="form-control" id="website_description" name="website_description" rows="3"><?php echo $settings && !empty($settings['website_description']) ? htmlspecialchars($settings['website_description']) : ''; ?></textarea>
                                         <small class="text-muted">Used for SEO and meta tags</small>
                                     </div>
                                 </div>
@@ -183,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                         <label for="logo" class="form-label">Upload Logo</label>
                                         <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
                                         <small class="text-muted">Max 5MB. Recommended: 200x100px or square</small>
-                                        <?php if ($settings['logo_url']): ?>
+                                        <?php if ($settings && !empty($settings['logo_url'])): ?>
                                             <div class="mt-2">
                                                 <strong>Current Logo:</strong>
                                                 <img src="<?php echo htmlspecialchars($settings['logo_url']); ?>" alt="Logo" class="logo-preview">
@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                                     <div class="mb-3">
                                         <label for="logo_url" class="form-label">Or Logo URL</label>
-                                        <input type="url" class="form-control" id="logo_url" name="logo_url" value="<?php echo htmlspecialchars($settings['logo_url'] ?? ''); ?>" placeholder="https://...">
+                                        <input type="url" class="form-control" id="logo_url" name="logo_url" value="<?php echo $settings && !empty($settings['logo_url']) ? htmlspecialchars($settings['logo_url']) : ''; ?>" placeholder="https://...">
                                     </div>
                                 </div>
                             </div>
@@ -208,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                         <label for="favicon" class="form-label">Upload Favicon</label>
                                         <input type="file" class="form-control" id="favicon" name="favicon" accept="image/*">
                                         <small class="text-muted">Max 5MB. Recommended: 64x64px or 32x32px (PNG or ICO)</small>
-                                        <?php if ($settings['favicon_url']): ?>
+                                        <?php if ($settings && !empty($settings['favicon_url'])): ?>
                                             <div class="mt-2">
                                                 <strong>Current Favicon:</strong>
                                                 <img src="<?php echo htmlspecialchars($settings['favicon_url']); ?>" alt="Favicon" class="favicon-preview">
@@ -218,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                                     <div class="mb-3">
                                         <label for="favicon_url" class="form-label">Or Favicon URL</label>
-                                        <input type="url" class="form-control" id="favicon_url" name="favicon_url" value="<?php echo htmlspecialchars($settings['favicon_url'] ?? ''); ?>" placeholder="https://...">
+                                        <input type="url" class="form-control" id="favicon_url" name="favicon_url" value="<?php echo $settings && !empty($settings['favicon_url']) ? htmlspecialchars($settings['favicon_url']) : ''; ?>" placeholder="https://...">
                                     </div>
                                 </div>
                             </div>
@@ -238,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <div class="card-body">
                                 <div class="mb-4">
                                     <strong>Logo Preview:</strong>
-                                    <?php if ($settings['logo_url']): ?>
+                                    <?php if ($settings && !empty($settings['logo_url'])): ?>
                                         <img src="<?php echo htmlspecialchars($settings['logo_url']); ?>" alt="Logo" class="img-fluid mt-2" style="max-width: 150px;">
                                     <?php else: ?>
                                         <p class="text-muted mt-2">No logo uploaded</p>
@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                                 <div class="mb-4">
                                     <strong>Favicon Preview:</strong>
-                                    <?php if ($settings['favicon_url']): ?>
+                                    <?php if ($settings && !empty($settings['favicon_url'])): ?>
                                         <img src="<?php echo htmlspecialchars($settings['favicon_url']); ?>" alt="Favicon" class="mt-2" style="width: 64px; height: 64px;">
                                     <?php else: ?>
                                         <p class="text-muted mt-2">No favicon uploaded</p>

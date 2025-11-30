@@ -190,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                         <label for="avatar" class="form-label">Profile Picture</label>
                                         <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
                                         <small class="text-muted">Max 5MB. Recommended: 300x300px</small>
-                                        <?php if ($user['avatar_url']): ?>
+                                        <?php if ($user && !empty($user['avatar_url'])): ?>
                                             <div class="mt-2">
                                                 <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Avatar" class="avatar-preview">
                                             </div>
@@ -219,19 +219,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <div class="card-body">
                                 <div class="mb-3">
                                     <strong>Username:</strong>
-                                    <p><?php echo htmlspecialchars($user['username']); ?></p>
+                                    <p><?php echo $user && !empty($user['username']) ? htmlspecialchars($user['username']) : '—'; ?></p>
                                 </div>
                                 <div class="mb-3">
                                     <strong>Email:</strong>
-                                    <p><?php echo htmlspecialchars($user['email']); ?></p>
+                                    <p><?php echo $user && !empty($user['email']) ? htmlspecialchars($user['email']) : '—'; ?></p>
                                 </div>
                                 <div class="mb-3">
                                     <strong>Member Since:</strong>
-                                    <p><?php echo date('M d, Y', strtotime($user['created_at'])); ?></p>
+                                    <p><?php echo $user && !empty($user['created_at']) ? date('M d, Y', strtotime($user['created_at'])) : '—'; ?></p>
                                 </div>
                                 <div class="mb-3">
                                     <strong>Last Updated:</strong>
-                                    <p><?php echo date('M d, Y H:i', strtotime($user['updated_at'])); ?></p>
+                                    <p><?php echo $user && !empty($user['updated_at']) ? date('M d, Y H:i', strtotime($user['updated_at'])) : '—'; ?></p>
                                 </div>
                             </div>
                         </div>

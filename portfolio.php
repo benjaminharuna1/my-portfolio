@@ -35,13 +35,13 @@ if ($category) {
                         <a href="<?php echo SITE_URL; ?>/portfolio-detail.php?id=<?php echo $item['id']; ?>" class="portfolio-card-link">
                             <div class="portfolio-card">
                                 <?php 
-                                $image_url = !empty($item['featured_image_url']) ? $item['featured_image_url'] : 'https://via.placeholder.com/400x300?text=' . urlencode($item['title']);
+                                $image_url = !empty($item['featured_image_url']) ? $item['featured_image_url'] : 'https://via.placeholder.com/400x300?text=' . urlencode($item['title'] ?? 'Portfolio');
                                 ?>
                                 <img src="<?php echo htmlspecialchars($image_url); ?>" 
-                                     alt="<?php echo htmlspecialchars($item['title']); ?>" class="img-fluid rounded portfolio-card-image">
+                                     alt="<?php echo htmlspecialchars($item['title'] ?? 'Portfolio Item'); ?>" class="img-fluid rounded portfolio-card-image">
                                 <div class="portfolio-overlay">
-                                    <h5><?php echo htmlspecialchars($item['title']); ?></h5>
-                                    <p><?php echo htmlspecialchars(substr($item['description'], 0, 100)); ?>...</p>
+                                    <h5><?php echo htmlspecialchars($item['title'] ?? 'Untitled'); ?></h5>
+                                    <p><?php echo htmlspecialchars(substr($item['description'] ?? '', 0, 100)); ?>...</p>
                                     <span class="btn btn-sm btn-light">View Details</span>
                                 </div>
                             </div>

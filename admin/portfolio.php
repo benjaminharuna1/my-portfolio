@@ -120,9 +120,17 @@ if (isset($_GET['edit'])) {
         .ql-editor { min-height: 300px; }
         .portfolio-image-preview { max-width: 100px; height: auto; border-radius: 5px; }
         .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
-        .image-item { position: relative; border-radius: 5px; overflow: hidden; }
-        .image-item img { width: 100%; height: 120px; object-fit: cover; }
-        .image-item .delete-btn { position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 12px; }
+        .image-item { position: relative; border-radius: 5px; overflow: hidden; cursor: grab; transition: all 0.2s ease; }
+        .image-item:active { cursor: grabbing; }
+        .image-item.drag-over { opacity: 0.5; transform: scale(0.95); }
+        .image-item-inner { position: relative; width: 100%; height: 120px; }
+        .image-item img { width: 100%; height: 100%; object-fit: cover; }
+        .image-item-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: space-between; padding: 5px; opacity: 0; transition: opacity 0.3s ease; }
+        .image-item:hover .image-item-overlay { opacity: 1; }
+        .drag-handle { color: white; font-size: 16px; font-weight: bold; cursor: grab; }
+        .image-item:active .drag-handle { cursor: grabbing; }
+        .image-item .delete-btn { background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 12px; transition: background 0.2s ease; }
+        .image-item .delete-btn:hover { background: rgba(255,0,0,1); }
     </style>
 </head>
 <body>
@@ -195,12 +203,12 @@ if (isset($_GET['edit'])) {
                                     
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title</label>
-                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $edit_item ? htmlspecialchars($edit_item['title']) : ''; ?>" required>
+                                        <input type="text" class="form-control" id="title" name="title" value="<?php echo $edit_item && !empty($edit_item['title']) ? htmlspecialchars($edit_item['title']) : ''; ?>" required>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Short Description</label>
-                                        <textarea class="form-control" id="description" name="description" rows="2" required><?php echo $edit_item ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="2" required><?php echo $edit_item && !empty($edit_item['description']) ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
                                         <small class="text-muted">This appears on the portfolio list page</small>
                                     </div>
 
@@ -213,19 +221,19 @@ if (isset($_GET['edit'])) {
 
                                     <div class="mb-3">
                                         <label for="category" class="form-label">Category</label>
-                                        <input type="text" class="form-control" id="category" name="category" value="<?php echo $edit_item ? htmlspecialchars($edit_item['category']) : ''; ?>">
+                                        <input type="text" class="form-control" id="category" name="category" value="<?php echo $edit_item && !empty($edit_item['category']) ? htmlspecialchars($edit_item['category']) : ''; ?>">
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="link" class="form-label">Project Link</label>
-                                        <input type="url" class="form-control" id="link" name="link" value="<?php echo $edit_item ? htmlspecialchars($edit_item['link']) : ''; ?>">
+                                        <input type="url" class="form-control" id="link" name="link" value="<?php echo $edit_item && !empty($edit_item['link']) ? htmlspecialchars($edit_item['link']) : ''; ?>">
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="featured_image" class="form-label">Featured Image (Displayed on Portfolio List)</label>
                                         <input type="file" class="form-control" id="featured_image" name="featured_image" accept="image/*">
                                         <small class="text-muted">Max 5MB. Recommended: 600x400px</small>
-                                        <?php if ($edit_item && $edit_item['featured_image_url']): ?>
+                                        <?php if ($edit_item && !empty($edit_item['featured_image_url'])): ?>
                                             <div class="mt-2">
                                                 <img src="<?php echo htmlspecialchars($edit_item['featured_image_url']); ?>" alt="Featured" class="portfolio-image-preview">
                                             </div>
@@ -234,7 +242,7 @@ if (isset($_GET['edit'])) {
 
                                     <div class="mb-3">
                                         <label for="featured_image_url" class="form-label">Or Featured Image URL</label>
-                                        <input type="url" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
+                                        <input type="url" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item && !empty($edit_item['featured_image_url']) ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
                                     </div>
 
                                     <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
@@ -264,7 +272,7 @@ if (isset($_GET['edit'])) {
 
                                     <div class="mb-3">
                                         <label for="alt_text" class="form-label">Alt Text (for accessibility)</label>
-                                        <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image">
+                                        <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image" value="">
                                     </div>
 
                                     <button type="submit" class="btn btn-success">Add Image</button>
@@ -275,14 +283,22 @@ if (isset($_GET['edit'])) {
                                 $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = " . $edit_item['id'] . " ORDER BY sort_order");
                                 if ($images->num_rows > 0):
                                 ?>
-                                <div class="image-gallery">
+                                <div class="image-gallery" id="sortableGallery">
                                     <?php while ($img = $images->fetch_assoc()): ?>
-                                    <div class="image-item">
-                                        <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo htmlspecialchars($img['alt_text']); ?>">
-                                        <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
+                                    <?php if (!empty($img['image_url'])): ?>
+                                    <div class="image-item" draggable="true" data-image-id="<?php echo $img['id']; ?>">
+                                        <div class="image-item-inner">
+                                            <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
+                                            <div class="image-item-overlay">
+                                                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                                                <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <?php endif; ?>
                                     <?php endwhile; ?>
                                 </div>
+                                <small class="text-muted d-block mt-2">💡 Drag images to reorder the gallery</small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -309,8 +325,8 @@ if (isset($_GET['edit'])) {
                                         while ($item = $result->fetch_assoc()):
                                         ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars(substr($item['title'], 0, 15)); ?></td>
-                                                <td><?php echo htmlspecialchars($item['category']); ?></td>
+                                                <td><?php echo htmlspecialchars(substr($item['title'] ?? 'Untitled', 0, 15)); ?></td>
+                                                <td><?php echo !empty($item['category']) ? htmlspecialchars($item['category']) : '—'; ?></td>
                                                 <td>
                                                     <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
                                                     <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</a>
@@ -345,7 +361,7 @@ if (isset($_GET['edit'])) {
         });
 
         // Load existing content
-        <?php if ($edit_item && $edit_item['body']): ?>
+        <?php if ($edit_item && !empty($edit_item['body'])): ?>
         quill.root.innerHTML = <?php echo json_encode($edit_item['body']); ?>;
         <?php endif; ?>
 
@@ -353,6 +369,77 @@ if (isset($_GET['edit'])) {
         document.querySelector('form').addEventListener('submit', function() {
             document.getElementById('body').value = quill.root.innerHTML;
         });
+
+        // Drag and drop reordering
+        let draggedElement = null;
+
+        const gallery = document.getElementById('sortableGallery');
+        if (gallery) {
+            const items = gallery.querySelectorAll('.image-item');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedElement = this;
+                    this.style.opacity = '0.5';
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', function(e) {
+                    this.style.opacity = '1';
+                    items.forEach(i => i.classList.remove('drag-over'));
+                    draggedElement = null;
+                });
+
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (this !== draggedElement) {
+                        this.classList.add('drag-over');
+                    }
+                });
+
+                item.addEventListener('dragleave', function(e) {
+                    this.classList.remove('drag-over');
+                });
+
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (this !== draggedElement) {
+                        // Swap elements
+                        gallery.insertBefore(draggedElement, this);
+                        updateImageOrder();
+                    }
+                    this.classList.remove('drag-over');
+                });
+            });
+        }
+
+        function updateImageOrder() {
+            const items = document.querySelectorAll('#sortableGallery .image-item');
+            const order = [];
+            items.forEach((item, index) => {
+                order.push({
+                    id: item.dataset.imageId,
+                    sort_order: index
+                });
+            });
+
+            // Send order to server
+            fetch('<?php echo SITE_URL; ?>/admin/update-image-order.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ images: order })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Image order updated');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
     </script>
 </body>
 </html>

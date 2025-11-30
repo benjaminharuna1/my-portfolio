@@ -5,7 +5,25 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    phone VARCHAR(20),
+    bio TEXT,
+    avatar_url VARCHAR(255),
+    avatar_filename VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS website_settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    logo_url VARCHAR(255),
+    logo_filename VARCHAR(255),
+    favicon_url VARCHAR(255),
+    favicon_filename VARCHAR(255),
+    website_name VARCHAR(200),
+    website_description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS portfolio_items (
@@ -90,3 +108,7 @@ INSERT INTO social_links (platform, url, icon) VALUES
 ('Instagram', 'https://instagram.com', 'fab fa-instagram'),
 ('GitHub', 'https://github.com', 'fab fa-github'),
 ('Twitter', 'https://twitter.com', 'fab fa-twitter');
+
+-- Insert default website settings
+INSERT INTO website_settings (website_name, website_description) VALUES 
+('My Portfolio', 'A professional portfolio website showcasing my work and skills');

@@ -207,7 +207,7 @@ if (isset($_GET['edit'])) {
                                     <div class="mb-3">
                                         <label for="body" class="form-label">Full Description (Rich Text)</label>
                                         <div id="editor" style="background: white;"></div>
-                                        <textarea id="body" name="body" style="display:none;"><?php echo $edit_item ? htmlspecialchars($edit_item['body']) : ''; ?></textarea>
+                                        <textarea id="body" name="body" style="display:none;"></textarea>
                                         <small class="text-muted">This appears on the project detail page</small>
                                     </div>
 
@@ -264,96 +264,95 @@ if (isset($_GET['edit'])) {
 
                                     <div class="mb-3">
                                         <label for="alt_text" class="form-label">Alt Text (for accessibility)</label>
-                                        
-l>y>
-</htmbodript>
-</</sc
-     });L;
-       erHTMll.root.innvalue = quiody').ById('blementtEdocument.ge     ) {
-       function(r('submit', entListene').addEvctor('formrySelement.que   docu    ion
- ssubmi sre formfoarea be hidden text   // Update   f; ?>
+                                        <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image">
+                                    </div>
 
-  ndi?php e     <); ?>;
-   'body']_item[edit_encode($ json?php echoHTML = <nnerot.irouill.        q
-y']): ?>item['bodit_em && $edt_it if ($edihp      <?pntent
-  sting co// Load exi  
+                                    <button type="submit" class="btn btn-success">Add Image</button>
+                                </form>
 
-              });    }
+                                <!-- Display Gallery -->
+                                <?php
+                                $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = " . $edit_item['id'] . " ORDER BY sort_order");
+                                if ($images->num_rows > 0):
+                                ?>
+                                <div class="image-gallery">
+                                    <?php while ($img = $images->fetch_assoc()): ?>
+                                    <div class="image-item">
+                                        <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo htmlspecialchars($img['alt_text']); ?>">
+                                        <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
+                                    </div>
+                                    <?php endwhile; ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
 
-          ]              'clean']
-     [           eo'],
-    ide', 'vink', 'imag       ['l          ' }],
-   'bullet{ 'list': , ed'}st': 'order 'li  [{               ock'],
-    'code-blte',lockquo      ['b         '],
-     strikeine', 'c', 'underl, 'itali   ['bold'            ,
-     3, false] }]: [1, 2, eader'     [{ 'h         
-      r: [  toolba          : {
-        modules        ow',
-e: 'snhem         ttor', {
-   di Quill('#el = new var quil
-        editorlize Quill/ Initia        /ipt>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Portfolio Items</h5>
+                            </div>
+                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $result = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC");
+                                        while ($item = $result->fetch_assoc()):
+                                        ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars(substr($item['title'], 0, 15)); ?></td>
+                                                <td><?php echo htmlspecialchars($item['category']); ?></td>
+                                                <td>
+                                                    <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
+                                                    <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</a>
+                                                </td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
-    <scr"></script>se.min.jstrap.bundlist/js/boot@5.3.0/drapstt/npm/bootjsdelivr.ne://cdn. src="httpsript>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize Quill editor
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'image', 'video'],
+                    ['clean']
+                ]
+            }
+        });
 
-    <scdiv
-    </v>     </diin>
-           </ma>
-    /div <              iv>
- /d <                   
- </div>                   
-    </div>                         e>
-   tabl  </                        
-      y>od        </tb                   
-         dwhile; ?>    <?php en                              >
-      tr    </                                 td>
-          </                                            
- ">Delete</a>Delete?')rn confirm('click="retuger" onm btn-dantn-sbtn blass="']; ?>" co $item['id ech?php?delete=<a href="     <                                           
-    >Edit</a>-warning"m btn"btn btn-ss= ?>" clasd'];em['icho $it<?php e"?edit=<a href=                                                   d>
- <t                                              /td>
-  ']); ?><goryaters($item['cmlspecialchaphp echo ht<td><?                                                >
-</td 15)); ?>tle'], 0,tir($item['chars(substlspecialhp echo htm<td><?p                                            >
-          <tr                                 
-             ?>                                _assoc()):
-->fetch$result ($item = le    whi                                 C");
-   t DEScreated_aORDER BY items o_tfoliporROM  * FELECT->query("S $connesult =     $r                        
-           ?php  <                             >
-            <tbody                           >
-         </thead                            >
-     </tr                                        th>
->Actions</  <th                                        ory</th>
-  eg<th>Cat                                         
-   itle</th>>Tth           <                             tr>
-            <                              thead>
-          <                       ">
-     ble-smable talass="table c    <t                        ">
-    auto;-y:  overflow 600px;-height:yle="maxbody" stass="card-  <div cl                     
-         </div>              
-           Items</h5>5>Portfolio       <h                      ">
-   rd-headerass="cacl    <div                         ">
-="cardlass      <div c              
-    d-4">"col-mclass=div    <                 >
+        // Load existing content
+        <?php if ($edit_item && $edit_item['body']): ?>
+        quill.root.innerHTML = <?php echo json_encode($edit_item['body']); ?>;
+        <?php endif; ?>
 
-  </div              >
-    p endif; ?  <?ph                      </div>
-              
-          v>        </di                    if; ?>
- <?php end                             </div>
-                                  ?>
- dwhile;en <?php                             v>
-       di    </                           
-     ete</a>>Del image?')"lete thisconfirm('Deturn k="re" onclicelete-btn"d class=?>"id']; mg['o $ich<?php eete_image=href="?del   <a                                     ]); ?>">
- t_text'g['al($imharslclspecia htm<?php echo>" alt="; ?])age_url'rs($img['imialchatmlspec echo h src="<?php      <img                            ">
-      e-itemss="imagclaiv  <d                                  : ?>
- oc())s->fetch_ass= $imagewhile ($img hp ?p        <                         
-   gallery">s="image-   <div clas                    >
-                  ?                       ws > 0):
->num_ro$images-      if (                     ;
-     rder")ort_oR BY s. " ORDE['id'] $edit_item" . = d  portfolio_is WHEREimagetfolio_M porFROSELECT * ("conn->query $images = $                          <?php
-                                  ery -->
-    Gallayspl- Di      <!-                    
-
-      /form>         <                  >
-     mage</buttonAdd Iccess">"btn btn-sut" class=ubmi="son type <butt                                   </div>
-
-                                
-    the image">"Describe older=xt" placeh="alt_te" nametext" id="alt_ntrols="form-coext" claspe="t<input ty
+        // Update hidden textarea before form submission
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('body').value = quill.root.innerHTML;
+        });
+    </script>
+</body>
+</html>

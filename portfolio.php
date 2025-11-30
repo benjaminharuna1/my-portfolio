@@ -34,7 +34,10 @@ if ($category) {
                     <div class="col-md-4 mb-4">
                         <a href="<?php echo SITE_URL; ?>/portfolio-detail.php?id=<?php echo $item['id']; ?>" class="portfolio-card-link">
                             <div class="portfolio-card">
-                                <img src="<?php echo htmlspecialchars($item['featured_image_url'] ?: 'https://via.placeholder.com/400x300?text=' . urlencode($item['title'])); ?>" 
+                                <?php 
+                                $image_url = !empty($item['featured_image_url']) ? $item['featured_image_url'] : 'https://via.placeholder.com/400x300?text=' . urlencode($item['title']);
+                                ?>
+                                <img src="<?php echo htmlspecialchars($image_url); ?>" 
                                      alt="<?php echo htmlspecialchars($item['title']); ?>" class="img-fluid rounded portfolio-card-image">
                                 <div class="portfolio-overlay">
                                     <h5><?php echo htmlspecialchars($item['title']); ?></h5>

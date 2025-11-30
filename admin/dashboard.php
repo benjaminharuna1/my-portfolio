@@ -56,6 +56,16 @@ $page_title = 'Admin Dashboard';
                                 <i class="fas fa-share-alt"></i> Social Links
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/profile.php">
+                                <i class="fas fa-user-circle"></i> My Profile
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/settings.php">
+                                <i class="fas fa-cog"></i> Website Settings
+                            </a>
+                        </li>
                         <li class="nav-item mt-4">
                             <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
                                 <i class="fas fa-sign-out-alt"></i> Logout

@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <div class="portfolio-gallery mb-5">
                         <div class="main-image-container mb-3">
                             <?php $main_image = getImageWithFallback($portfolio['featured_image_url'], $portfolio['title'] ?? 'Portfolio Item', 800, 600); ?>
-                            <img id="mainImage" src="<?php echo $main_image; ?>" alt="<?php echo getImageAlt($portfolio['title'], 'Portfolio Item'); ?>" class="img-fluid rounded" style="width: 100%; max-height: 600px; object-fit: cover;">
+                            <img id="mainImage" src="<?php echo $main_image; ?>" alt="<?php echo getImageAlt($portfolio['title'], 'Portfolio Item'); ?>" class="img-fluid rounded" style="width: 100%; max-height: 600px; object-fit: cover; cursor: zoom-in;" ondblclick="openLightbox(0)">
                             <div class="image-counter">
                                 <span id="currentImageNum">1</span> / <span id="totalImageNum"><?php echo ($images->num_rows + 1); ?></span>
                             </div>
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         <?php if ($images && $images->num_rows > 0): ?>
                         <div class="thumbnail-gallery">
                             <?php if (!empty($portfolio['featured_image_url'])): ?>
-                            <div class="thumbnail-item" onclick="changeImage('<?php echo getImageUrl($portfolio['featured_image_url']); ?>', 1)">
+                            <div class="thumbnail-item" onclick="changeImage('<?php echo getImageUrl($portfolio['featured_image_url']); ?>', 1)" ondblclick="openLightbox(0)">
                                 <img src="<?php echo getImageUrl($portfolio['featured_image_url']); ?>" alt="Featured" class="thumbnail-img">
                             </div>
                             <?php endif; ?>
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             while ($img = $images->fetch_assoc()):
                                 if (!empty($img['image_url'])):
                             ?>
-                            <div class="thumbnail-item" onclick="changeImage('<?php echo getImageUrl($img['image_url']); ?>', <?php echo $index; ?>)">
+                            <div class="thumbnail-item" onclick="changeImage('<?php echo getImageUrl($img['image_url']); ?>', <?php echo $index; ?>)" ondblclick="openLightbox(<?php echo $index - 1; ?>)">
                                 <img src="<?php echo getImageUrl($img['image_url']); ?>" alt="<?php echo getImageAlt($img['alt_text'], 'Gallery Image'); ?>" class="thumbnail-img">
                             </div>
                             <?php 
@@ -235,6 +235,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </div>
         </div>
     </section>
+
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightbox" class="lightbox-modal">
+        <div class="lightbox-container">
+            <!-- Close Button -->
+            <button class="lightbox-close" onclick="closeLightbox()" title="Close (Esc)">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Image Counter -->
+            <div class="lightbox-counter" id="lightboxCounter">1 / 1</div>
+
+            <!-- Main Image -->
+            <div class="lightbox-image-wrapper">
+                <img id="lightboxImage" src="" alt="Gallery Image" class="lightbox-image">
+            </div>
+
+            <!-- Navigation Arrows -->
+            <button class="lightbox-nav lightbox-prev" onclick="prevImage()" title="Previous (←)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="lightbox-nav lightbox-next" onclick="nextImage()" title="Next (→)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <!-- Controls -->
+            <div class="lightbox-controls">
+                <button class="lightbox-btn" onclick="zoomOut()" title="Zoom Out (-)">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="lightbox-btn" onclick="resetZoom()" title="Reset Zoom (0)">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button class="lightbox-btn" onclick="zoomIn()" title="Zoom In (+)">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <!-- Info -->
+            <div class="lightbox-info">
+                <small>💡 Swipe to navigate • Arrow keys to move • +/- to zoom • 0 to reset • Esc to close</small>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <?php include 'includes/footer.php'; ?>
@@ -427,9 +472,229 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         max-height: 400px;
     }
 }
+
+/* Lightbox Styles */
+.lightbox-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.lightbox-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.lightbox-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.lightbox-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    cursor: grab;
+}
+
+.lightbox-image:active {
+    cursor: grabbing;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 28px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10000;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+.lightbox-counter {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 10000;
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10000;
+}
+
+.lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-prev {
+    left: 20px;
+}
+
+.lightbox-next {
+    right: 20px;
+}
+
+.lightbox-controls {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    border-radius: 50px;
+    z-index: 10000;
+}
+
+.lightbox-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.lightbox-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+.lightbox-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    font-size: 0.85rem;
+    z-index: 10000;
+}
+
+@media (max-width: 768px) {
+    .lightbox-close,
+    .lightbox-nav {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .lightbox-prev {
+        left: 10px;
+    }
+
+    .lightbox-next {
+        right: 10px;
+    }
+
+    .lightbox-counter {
+        top: 10px;
+        left: 10px;
+        font-size: 0.8rem;
+    }
+
+    .lightbox-controls {
+        bottom: 60px;
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .lightbox-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+
+    .lightbox-info {
+        font-size: 0.75rem;
+        bottom: 10px;
+    }
+}
 </style>
 
 <script>
+// Gallery images array
+const galleryImages = [
+    '<?php echo getImageUrl($portfolio['featured_image_url']); ?>'
+    <?php 
+    $images->data_seek(0);
+    while ($img = $images->fetch_assoc()):
+        if (!empty($img['image_url'])):
+    ?>
+    , '<?php echo getImageUrl($img['image_url']); ?>'
+    <?php 
+        endif;
+    endwhile; 
+    ?>
+];
+
+let currentLightboxIndex = 0;
+let lightboxZoom = 1;
+let touchStartX = 0;
+let touchEndX = 0;
+
 function changeImage(imageUrl, imageNum) {
     const mainImage = document.getElementById('mainImage');
     mainImage.src = imageUrl;
@@ -457,14 +722,110 @@ function changeImage(imageUrl, imageNum) {
     });
 }
 
-// Zoom functionality
-document.getElementById('mainImage').addEventListener('click', function() {
-    if (this.style.transform === 'scale(1.5)') {
-        this.style.transform = 'scale(1)';
-    } else {
-        this.style.transform = 'scale(1.5)';
+function openLightbox(index) {
+    currentLightboxIndex = index;
+    lightboxZoom = 1;
+    const lightbox = document.getElementById('imageLightbox');
+    const lightboxImg = document.getElementById('lightboxImage');
+    
+    lightboxImg.src = galleryImages[index];
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    updateLightboxCounter();
+}
+
+function closeLightbox() {
+    const lightbox = document.getElementById('imageLightbox');
+    lightbox.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    lightboxZoom = 1;
+}
+
+function updateLightboxCounter() {
+    const counter = document.getElementById('lightboxCounter');
+    if (counter) {
+        counter.textContent = (currentLightboxIndex + 1) + ' / ' + galleryImages.length;
+    }
+}
+
+function nextImage() {
+    currentLightboxIndex = (currentLightboxIndex + 1) % galleryImages.length;
+    lightboxZoom = 1;
+    const lightboxImg = document.getElementById('lightboxImage');
+    lightboxImg.src = galleryImages[currentLightboxIndex];
+    lightboxImg.style.transform = 'scale(1)';
+    updateLightboxCounter();
+}
+
+function prevImage() {
+    currentLightboxIndex = (currentLightboxIndex - 1 + galleryImages.length) % galleryImages.length;
+    lightboxZoom = 1;
+    const lightboxImg = document.getElementById('lightboxImage');
+    lightboxImg.src = galleryImages[currentLightboxIndex];
+    lightboxImg.style.transform = 'scale(1)';
+    updateLightboxCounter();
+}
+
+function zoomIn() {
+    lightboxZoom = Math.min(lightboxZoom + 0.2, 3);
+    const lightboxImg = document.getElementById('lightboxImage');
+    lightboxImg.style.transform = 'scale(' + lightboxZoom + ')';
+}
+
+function zoomOut() {
+    lightboxZoom = Math.max(lightboxZoom - 0.2, 1);
+    const lightboxImg = document.getElementById('lightboxImage');
+    lightboxImg.style.transform = 'scale(' + lightboxZoom + ')';
+}
+
+function resetZoom() {
+    lightboxZoom = 1;
+    const lightboxImg = document.getElementById('lightboxImage');
+    lightboxImg.style.transform = 'scale(1)';
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    const lightbox = document.getElementById('imageLightbox');
+    if (lightbox.style.display === 'flex') {
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === '+' || e.key === '=') zoomIn();
+        if (e.key === '-') zoomOut();
+        if (e.key === '0') resetZoom();
     }
 });
+
+// Touch swipe support
+document.addEventListener('touchstart', function(e) {
+    const lightbox = document.getElementById('imageLightbox');
+    if (lightbox.style.display === 'flex') {
+        touchStartX = e.changedTouches[0].screenX;
+    }
+}, false);
+
+document.addEventListener('touchend', function(e) {
+    const lightbox = document.getElementById('imageLightbox');
+    if (lightbox.style.display === 'flex') {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }
+}, false);
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            nextImage();
+        } else {
+            prevImage();
+        }
+    }
+}
 
 // Initialize first thumbnail as active
 document.addEventListener('DOMContentLoaded', function() {

@@ -39,50 +39,29 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
         <div class="container">
             <h2 class="text-center mb-5">Skills</h2>
             <div class="row">
+                <?php
+                $skills = $conn->query("SELECT * FROM skills ORDER BY sort_order ASC, id DESC");
+                $col_count = 0;
+                while ($skill = $skills->fetch_assoc()):
+                    if ($col_count % 2 == 0 && $col_count > 0) {
+                        echo '</div><div class="row">';
+                    }
+                ?>
                 <div class="col-md-6">
                     <div class="skill-item mb-4">
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Web Design</span>
-                            <span>90%</span>
+                            <span><?php echo htmlspecialchars($skill['name']); ?></span>
+                            <span><?php echo $skill['proficiency']; ?>%</span>
                         </div>
                         <div class="progress">
-                            <div class="progress-bar" style="width: 90%"></div>
+                            <div class="progress-bar" style="width: <?php echo $skill['proficiency']; ?>%"></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="skill-item mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Web Development</span>
-                            <span>85%</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: 85%"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="skill-item mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>UI/UX Design</span>
-                            <span>88%</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: 88%"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="skill-item mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>PHP & MySQL</span>
-                            <span>92%</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: 92%"></div>
-                        </div>
-                    </div>
-                </div>
+                <?php 
+                    $col_count++;
+                endwhile; 
+                ?>
             </div>
         </div>
     </section>

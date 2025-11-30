@@ -235,7 +235,23 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
 
                                     <div class="mb-3">
                                         <label for="category" class="form-label">Category</label>
-                                        <input type="text" class="form-control" id="category" name="category" value="<?php echo $edit_item && !empty($edit_item['category']) ? htmlspecialchars($edit_item['category']) : ''; ?>">
+                                        <div class="input-group">
+                                            <select class="form-control" id="category" name="category">
+                                                <option value="">Select a category...</option>
+                                                <?php
+                                                $categories = $conn->query("SELECT id, name FROM categories ORDER BY name");
+                                                while ($cat = $categories->fetch_assoc()):
+                                                ?>
+                                                <option value="<?php echo htmlspecialchars($cat['name']); ?>" <?php echo ($edit_item && $edit_item['category'] === $cat['name']) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($cat['name']); ?>
+                                                </option>
+                                                <?php endwhile; ?>
+                                            </select>
+                                            <a href="<?php echo SITE_URL; ?>/admin/categories.php?edit=new" class="btn btn-outline-primary" target="_blank" title="Add new category">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                        </div>
+                                        <small class="text-muted">Select from existing categories or click + to add a new one</small>
                                     </div>
 
                                     <div class="mb-3">

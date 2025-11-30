@@ -24,6 +24,37 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `bio` text,
+  `avatar_url` varchar(255) DEFAULT NULL,
+  `avatar_filename` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `username`, `password`, `email`, `first_name`, `last_name`, `phone`, `bio`, `avatar_url`, `avatar_filename`, `created_at`, `updated_at`) VALUES
+(1, 'admin', '$2y$10$a1ZlQ3AAVlETr2XWM9MrsOxhlOelw9Vxqg0Kcj08T7a9Rnr4MjHB.', 'admin@portfolio.com', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-30 10:43:53', '2025-11-30 10:43:53');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `about`
 --
 
@@ -71,27 +102,6 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `portfolio_images`
---
-
-DROP TABLE IF EXISTS `portfolio_images`;
-CREATE TABLE IF NOT EXISTS `portfolio_images` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `portfolio_id` int NOT NULL,
-  `image_url` varchar(255) NOT NULL,
-  `image_filename` varchar(255) DEFAULT NULL,
-  `alt_text` varchar(255) DEFAULT NULL COMMENT 'Accessibility alt text for the image',
-  `sort_order` int DEFAULT '0' COMMENT 'Order of images in gallery',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `portfolio_id` (`portfolio_id`),
-  KEY `sort_order` (`sort_order`),
-  CONSTRAINT `fk_portfolio_images_portfolio_id` FOREIGN KEY (`portfolio_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `portfolio_items`
 --
 
@@ -118,6 +128,27 @@ CREATE TABLE IF NOT EXISTS `portfolio_items` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `portfolio_images`
+--
+
+DROP TABLE IF EXISTS `portfolio_images`;
+CREATE TABLE IF NOT EXISTS `portfolio_images` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `portfolio_id` int NOT NULL,
+  `image_url` varchar(255) NOT NULL,
+  `image_filename` varchar(255) DEFAULT NULL,
+  `alt_text` varchar(255) DEFAULT NULL COMMENT 'Accessibility alt text for the image',
+  `sort_order` int DEFAULT '0' COMMENT 'Order of images in gallery',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `portfolio_id` (`portfolio_id`),
+  KEY `sort_order` (`sort_order`),
+  CONSTRAINT `fk_portfolio_images_portfolio_id` FOREIGN KEY (`portfolio_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `portfolio_ratings`
 --
 
@@ -136,6 +167,65 @@ CREATE TABLE IF NOT EXISTS `portfolio_ratings` (
   KEY `is_approved` (`is_approved`),
   CONSTRAINT `fk_portfolio_ratings_portfolio_id` FOREIGN KEY (`portfolio_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `categories`
+--
+
+DROP TABLE IF EXISTS `categories`;
+CREATE TABLE IF NOT EXISTS `categories` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `slug` varchar(100) NOT NULL UNIQUE,
+  `description` text,
+  `color` varchar(7) DEFAULT '#667eea',
+  `icon` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `categories`
+--
+
+INSERT INTO `categories` (`id`, `name`, `slug`, `description`, `color`, `icon`, `created_at`, `updated_at`) VALUES
+(1, 'Web Design', 'web-design', 'Beautiful and responsive web designs', '#667eea', 'fa-palette', '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(2, 'Web Development', 'web-development', 'Robust and scalable web applications', '#00d4ff', 'fa-code', '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(3, 'Mobile App', 'mobile-app', 'iOS and Android mobile applications', '#ff6b6b', 'fa-mobile-alt', '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(4, 'UI/UX Design', 'ui-ux-design', 'Intuitive user interfaces and experiences', '#ffd93d', 'fa-pencil-ruler', '2025-11-30 10:43:54', '2025-11-30 10:43:54');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `skills`
+--
+
+DROP TABLE IF EXISTS `skills`;
+CREATE TABLE IF NOT EXISTS `skills` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `proficiency` int NOT NULL CHECK (`proficiency` >= 0 AND `proficiency` <= 100),
+  `category` varchar(100) DEFAULT NULL,
+  `sort_order` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `sort_order` (`sort_order`),
+  KEY `category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `skills`
+--
+
+INSERT INTO `skills` (`id`, `name`, `proficiency`, `category`, `sort_order`, `created_at`, `updated_at`) VALUES
+(1, 'Web Design', 90, 'Design', 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(2, 'Web Development', 85, 'Development', 2, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(3, 'UI/UX Design', 88, 'Design', 3, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(4, 'PHP & MySQL', 92, 'Backend', 4, '2025-11-30 10:43:54', '2025-11-30 10:43:54');
 
 -- --------------------------------------------------------
 
@@ -223,37 +313,6 @@ INSERT INTO `testimonials` (`id`, `client_name`, `client_title`, `client_company
 (1, 'Sarah Johnson', 'Marketing Director', 'Tech Innovations Inc', NULL, NULL, 'Exceptional work! The website redesign exceeded our expectations. Highly professional and responsive to feedback.', 5, 1, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
 (2, 'Michael Chen', 'CEO', 'Digital Solutions Ltd', NULL, NULL, 'Outstanding developer. Delivered the project on time and with excellent attention to detail. Highly recommended!', 5, 1, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
 (3, 'Emma Williams', 'Product Manager', 'Creative Agency Co', NULL, NULL, 'Great communication and technical expertise. The final product was exactly what we envisioned.', 5, 0, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `first_name` varchar(100) DEFAULT NULL,
-  `last_name` varchar(100) DEFAULT NULL,
-  `phone` varchar(20) DEFAULT NULL,
-  `bio` text,
-  `avatar_url` varchar(255) DEFAULT NULL,
-  `avatar_filename` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`id`, `username`, `password`, `email`, `first_name`, `last_name`, `phone`, `bio`, `avatar_url`, `avatar_filename`, `created_at`, `updated_at`) VALUES
-(1, 'admin', '$2y$10$a1ZlQ3AAVlETr2XWM9MrsOxhlOelw9Vxqg0Kcj08T7a9Rnr4MjHB.', 'admin@portfolio.com', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-30 10:43:53', '2025-11-30 10:43:53');
 
 -- --------------------------------------------------------
 

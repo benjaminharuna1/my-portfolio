@@ -52,7 +52,7 @@ p {
     right: -10%;
     width: 500px;
     height: 500px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 50%;
     animation: float 6s ease-in-out infinite;
 }
@@ -68,7 +68,7 @@ p {
     margin-bottom: 20px;
     letter-spacing: -1px;
     line-height: 1.2;
-    color: white;
+    color: var(--dark-color);
 }
 
 .hero-section .lead {
@@ -76,7 +76,7 @@ p {
     margin-bottom: 30px;
     font-weight: 300;
     opacity: 1;
-    color: white;
+    color: var(--dark-color);
 }
 
 .social-icons {

@@ -303,18 +303,22 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                     <input type="hidden" name="action" value="add_image">
                                     <input type="hidden" name="portfolio_id" value="<?php echo $edit_item['id']; ?>">
                                     
-                                    <div class="mb-3">
-                                        <label for="portfolio_image" class="form-label">Add Image to Gallery</label>
-                                        <input type="file" class="form-control" id="portfolio_image" name="portfolio_image" accept="image/*" required>
-                                        <small class="text-muted">Max 5MB. Recommended: 800x600px</small>
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label for="portfolio_image" class="form-label">Add Image to Gallery</label>
+                                            <input type="file" class="form-control" id="portfolio_image" name="portfolio_image" accept="image/*" required>
+                                            <small class="text-muted">Max 5MB. Recommended: 800x600px</small>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="alt_text" class="form-label">Alt Text</label>
+                                            <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image" value="">
+                                            <small class="text-muted">For accessibility</small>
+                                        </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label for="alt_text" class="form-label">Alt Text (for accessibility)</label>
-                                        <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image" value="">
-                                    </div>
-
-                                    <button type="submit" class="btn btn-success">Add Image</button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-plus"></i> Add Image
+                                    </button>
                                 </form>
 
                                 <!-- Display Gallery -->
@@ -322,7 +326,7 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                 $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = " . $edit_item['id'] . " ORDER BY sort_order");
                                 if ($images->num_rows > 0):
                                 ?>
-                                <div class="image-gallery" id="sortableGallery">
+                                <div class="image-gallery" id="sortableGallery" style="margin-top: 20px;">
                                     <?php while ($img = $images->fetch_assoc()): ?>
                                     <?php if (!empty($img['image_url'])): ?>
                                     <div class="image-item" draggable="true" data-image-id="<?php echo $img['id']; ?>">
@@ -338,6 +342,8 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                     <?php endwhile; ?>
                                 </div>
                                 <small class="text-muted d-block mt-2">💡 Drag images to reorder the gallery</small>
+                                <?php else: ?>
+                                <p class="text-muted">No images added yet. Upload your first image above.</p>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -364,7 +370,6 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                     ['clean']
                 ]
             }
-        });
         });
 
         // Load existing content

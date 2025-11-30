@@ -251,6 +251,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         </div>
     </section>
 
+    <!-- Call to Action Section -->
+    <section class="cta-section py-5">
+        <div class="container">
+            <div class="cta-content text-center">
+                <h2 class="cta-title mb-3">Interested in This Project?</h2>
+                <p class="cta-subtitle mb-4">Let's discuss how I can help bring your ideas to life. Contact me today to start your next project.</p>
+                <a href="<?php echo SITE_URL; ?>/contact.php" class="btn btn-light btn-lg cta-button">
+                    <i class="fas fa-envelope"></i> Get In Touch Today
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Image Lightbox Modal -->
     <div id="imageLightbox" class="lightbox-modal">
         <div class="lightbox-container">

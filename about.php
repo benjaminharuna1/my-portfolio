@@ -65,6 +65,19 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
             </div>
         </div>
     </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section py-5">
+        <div class="container">
+            <div class="cta-content text-center">
+                <h2 class="cta-title mb-3">Ready to Work Together?</h2>
+                <p class="cta-subtitle mb-4">Let's discuss your project and create something amazing together. I'm always excited to take on new challenges.</p>
+                <a href="<?php echo SITE_URL; ?>/contact.php" class="btn btn-light btn-lg cta-button">
+                    <i class="fas fa-envelope"></i> Get In Touch Today
+                </a>
+            </div>
+        </div>
+    </section>
 </main>
 
 <?php include 'includes/footer.php'; ?>

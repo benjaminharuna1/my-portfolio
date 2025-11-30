@@ -12,12 +12,24 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
-    image_url VARCHAR(255),
+    body LONGTEXT,
+    featured_image_url VARCHAR(255),
+    featured_image_filename VARCHAR(255),
     category VARCHAR(100),
     link VARCHAR(255),
-    image_filename VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_images (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    portfolio_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    image_filename VARCHAR(255),
+    alt_text VARCHAR(255),
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolio_items(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS services (

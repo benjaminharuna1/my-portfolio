@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'includes/image-helper.php';
 $page_title = 'Testimonials';
 
 // Get active testimonials
@@ -41,8 +42,8 @@ $testimonials = $conn->query("SELECT * FROM testimonials WHERE is_active = 1 ORD
                             <!-- Client Info -->
                             <div class="client-info d-flex align-items-center">
                                 <?php if (!empty($testimonial['client_image_url'])): ?>
-                                    <img src="<?php echo htmlspecialchars($testimonial['client_image_url']); ?>" 
-                                         alt="<?php echo htmlspecialchars($testimonial['client_name']); ?>" 
+                                    <img src="<?php echo getImageUrl($testimonial['client_image_url']); ?>" 
+                                         alt="<?php echo getImageAlt($testimonial['client_name'], 'Client'); ?>" 
                                          class="client-avatar me-3">
                                 <?php else: ?>
                                     <div class="client-avatar me-3">

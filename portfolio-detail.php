@@ -1,9 +1,10 @@
 <?php
 require 'config.php';
+require 'includes/image-helper.php';
 $page_title = 'Portfolio Detail';
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$portfolio = $conn->query("SELECT * FROM portfolio_items WHERE id = $id")->fetch_assoc();
+$portfolio = $conn->query("SELECT * FROM portfolio_items WHERE id = $id AND status = 'published'")->fetch_assoc();
 
 if (!$portfolio) {
     header('Location: ' . SITE_URL . '/portfolio.php');
@@ -22,7 +23,8 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
                     <!-- Image Gallery -->
                     <div class="portfolio-gallery mb-5">
                         <div class="main-image-container mb-3">
-                            <img id="mainImage" src="<?php echo htmlspecialchars($portfolio['featured_image_url'] ?? 'https://via.placeholder.com/800x600?text=No+Image'); ?>" alt="<?php echo htmlspecialchars($portfolio['title'] ?? 'Portfolio Item'); ?>" class="img-fluid rounded" style="width: 100%; max-height: 600px; object-fit: cover;">
+                            <?php $main_image = getImageWithFallback($portfolio['featured_image_url'], $portfolio['title'] ?? 'Portfolio Item', 800, 600); ?>
+                            <img id="mainImage" src="<?php echo $main_image; ?>" alt="<?php echo getImageAlt($portfolio['title'], 'Portfolio Item'); ?>" class="img-fluid rounded" style="width: 100%; max-height: 600px; object-fit: cover;">
                             <div class="image-counter">
                                 <span id="currentImageNum">1</span> / <span id="totalImageNum"><?php echo ($images->num_rows + 1); ?></span>
                             </div>
@@ -32,8 +34,8 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
                         <?php if ($images && $images->num_rows > 0): ?>
                         <div class="thumbnail-gallery">
                             <?php if (!empty($portfolio['featured_image_url'])): ?>
-                            <div class="thumbnail-item" onclick="changeImage('<?php echo htmlspecialchars($portfolio['featured_image_url']); ?>', 1)">
-                                <img src="<?php echo htmlspecialchars($portfolio['featured_image_url']); ?>" alt="Featured" class="thumbnail-img">
+                            <div class="thumbnail-item" onclick="changeImage('<?php echo getImageUrl($portfolio['featured_image_url']); ?>', 1)">
+                                <img src="<?php echo getImageUrl($portfolio['featured_image_url']); ?>" alt="Featured" class="thumbnail-img">
                             </div>
                             <?php endif; ?>
                             <?php
@@ -42,8 +44,8 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
                             while ($img = $images->fetch_assoc()):
                                 if (!empty($img['image_url'])):
                             ?>
-                            <div class="thumbnail-item" onclick="changeImage('<?php echo htmlspecialchars($img['image_url']); ?>', <?php echo $index; ?>)">
-                                <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Gallery Image'); ?>" class="thumbnail-img">
+                            <div class="thumbnail-item" onclick="changeImage('<?php echo getImageUrl($img['image_url']); ?>', <?php echo $index; ?>)">
+                                <img src="<?php echo getImageUrl($img['image_url']); ?>" alt="<?php echo getImageAlt($img['alt_text'], 'Gallery Image'); ?>" class="thumbnail-img">
                             </div>
                             <?php 
                                 endif;

@@ -1,13 +1,14 @@
 <?php
 require 'config.php';
+require 'includes/image-helper.php';
 $page_title = 'Portfolio';
 $category = isset($_GET['category']) ? $_GET['category'] : '';
 
 if ($category) {
     $category = $conn->real_escape_string($category);
-    $result = $conn->query("SELECT * FROM portfolio_items WHERE category = '$category'");
+    $result = $conn->query("SELECT * FROM portfolio_items WHERE category = '$category' AND status = 'published'");
 } else {
-    $result = $conn->query("SELECT * FROM portfolio_items");
+    $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published'");
 }
 ?>
 <?php include 'includes/header.php'; ?>
@@ -35,10 +36,10 @@ if ($category) {
                         <a href="<?php echo SITE_URL; ?>/portfolio-detail.php?id=<?php echo $item['id']; ?>" class="portfolio-card-link">
                             <div class="portfolio-card">
                                 <?php 
-                                $image_url = !empty($item['featured_image_url']) ? $item['featured_image_url'] : 'https://via.placeholder.com/400x300?text=' . urlencode($item['title'] ?? 'Portfolio');
+                                $image_url = getImageWithFallback($item['featured_image_url'], $item['title'] ?? 'Portfolio', 400, 300);
                                 ?>
-                                <img src="<?php echo htmlspecialchars($image_url); ?>" 
-                                     alt="<?php echo htmlspecialchars($item['title'] ?? 'Portfolio Item'); ?>" class="img-fluid rounded portfolio-card-image">
+                                <img src="<?php echo $image_url; ?>" 
+                                     alt="<?php echo getImageAlt($item['title'], 'Portfolio Item'); ?>" class="img-fluid rounded portfolio-card-image">
                                 <div class="portfolio-overlay">
                                     <h5><?php echo htmlspecialchars($item['title'] ?? 'Untitled'); ?></h5>
                                     <p><?php echo htmlspecialchars(substr($item['description'] ?? '', 0, 100)); ?>...</p>

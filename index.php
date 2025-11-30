@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'includes/image-helper.php';
 $page_title = 'Home';
 ?>
 <?php include 'includes/header.php'; ?>
@@ -76,13 +77,14 @@ $page_title = 'Home';
             <h2 class="text-center mb-5">Featured Work</h2>
             <div class="row">
                 <?php
-                $result = $conn->query("SELECT * FROM portfolio_items LIMIT 3");
+                $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published' LIMIT 3");
                 while ($item = $result->fetch_assoc()):
+                    $image_url = getImageWithFallback($item['featured_image_url'], $item['title'], 400, 300);
                 ?>
                     <div class="col-md-4 mb-4">
                         <div class="portfolio-card">
-                            <img src="<?php echo htmlspecialchars($item['image_url'] ?: 'https://via.placeholder.com/400x300?text=' . urlencode($item['title'])); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['title']); ?>" class="img-fluid rounded">
+                            <img src="<?php echo $image_url; ?>" 
+                                 alt="<?php echo getImageAlt($item['title'], 'Portfolio Item'); ?>" class="img-fluid rounded">
                             <div class="portfolio-overlay">
                                 <h5><?php echo htmlspecialchars($item['title']); ?></h5>
                                 <p><?php echo htmlspecialchars(substr($item['description'], 0, 100)); ?>...</p>

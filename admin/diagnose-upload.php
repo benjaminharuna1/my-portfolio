@@ -122,86 +122,70 @@ if (!isset($_SESSION['user_id'])) {
                                 <td>
                                     <?php
                                     if (!empty($row['featured_image_url'])) {
-                                        // Extract filename from URL
                                         $filename = basename($row['featured_image_url']);
                                         $file_path = dirname(__DIR__) . '/uploads/' . $filename;
-                                      l>
+                                        if (file_exists($file_path)) {
+                                            echo '<span class="badge bg-success">File exists</span>';
+                                        } else {
+                                            echo '<span class="badge bg-danger">File missing</span>';
+                                        }
+                                    } else {
+                                        echo '<span class="badge bg-warning">No URL</span>';
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-</htm
-</body>t>ripjs"></scle.min..bundstrapist/js/boot/dp@5.3.0ootstranet/npm/br.delivs://cdn.js"http<script src=v>
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Test Image Display</h5>
+            </div>
+            <div class="card-body">
+                <?php
+                $result = $conn->query("SELECT featured_image_url FROM portfolio_items WHERE featured_image_url IS NOT NULL AND featured_image_url != '' LIMIT 1");
+                if ($result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    $url = $row['featured_image_url'];
+                    ?>
+                    <p><strong>Testing image URL:</strong></p>
+                    <code><?php echo htmlspecialchars($url); ?></code>
+                    <div class="mt-3">
+                        <img src="<?php echo htmlspecialchars($url); ?>" alt="Test" style="max-width: 300px; border: 2px solid #ccc;">
+                    </div>
+                    <?php
+                } else {
+                    echo '<p class="text-muted">No portfolio items with images found.</p>';
+                }
+                ?>
+            </div>
+        </div>
 
-        </di   </div>
-a>
-     oard</ to Dashb">Backtn-secondaryss="btn bhp" cla/dashboard.p/adminE_URL; ?>echo SIT?php <a href="<           
- t-4 mb-4">="m class        <div
-div>
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>If images are not showing:</strong></p>
+                <ol>
+                    <li>Verify that SITE_URL in .env matches your actual site URL</li>
+                    <li>Check that the uploads directory exists and is writable</li>
+                    <li>Verify image files exist in the uploads folder</li>
+                    <li>Check browser console for 404 errors on image requests</li>
+                    <li>Ensure .htaccess allows access to the uploads folder</li>
+                </ol>
+            </div>
+        </div>
 
-        </</div>      
-         </ul>             >
-code></limain.com</s://doode>httpshould be <cTE_URL SIde> → m</comain.cohttps://doi><code>       <l             de></li>
-colocalhost</ttp://d be <code>hTE_URL shoul/code> → SI//localhost<de>http:     <li><co         i>
-      o</code></ltfoliormy-plocalhost/p://ode>httbe <chould  SITE_URL s> →dertfolio</cohost/my-poocal>http://lli><code          <          <ul>
-         p>
-       ></ at:</stronge is sitrong>If yourt-3"><stclass="mp          <      pre>
+        <div class="mt-4 mb-4">
+            <a href="<?php echo SITE_URL; ?>/admin/dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
 
-   </             └── ...
- here)
-tored mages ss/  (iploaddes/
-├── unclu├── idmin/
- URL)
-├── asite actual atch yourRL should mITE_U
-├── .env (Sct_root/jero<pre>
-p             
-   /p>e:</strong><e should bstructury orur directtrong>Yo3"><smt-<p class="                  
-       ol>
-       </             li>
-    SITE_URL</fter fixingoad images a-upl   <li>Re               
-  </li>dinglyRL accor.env SITE_Uate  updare wrong,If URLs      <li>           /li>
-    tructure< directory sour actualURLs match ythe erify   <li>V              </li>
-    vection aboabase" sen Datple Images ie "Samheck th       <li>C       
-             <ol>
-         ong></p>ying:</strispla d are not images>Ifp><strong           <  body">
-   card-div class="    <        </div>
-     >
-       </h5dationsenecomm       <h5>R    
-     der">hea"card-<div class=            ">
-rd mt-4="calass   <div c
-     iv>
-</d      /div>
-             <
- if; ?>nd e      <?php    
-      /p>st.<to tease  databinimages ted">No xt-mu="te  <p class          ?>
-        e: ls <?php e    
-           ll></p>smaong.</RL is wr icon, the Un imageokeou see a brf ys correct. I URL iove, thee ab an imagseef you small>I3"><s="mt-as   <p cl            ">
-     lid #ccc;der: 2px so00px; bor: 3max-widthstyle=""Test" ; ?>" alt=rs($url)alchaho htmlspeciec="<?php <img src              
-      </p>strong>ng>Image:</tro   <p><s               /p>
-  ><</coders($url); ?>lchaciaecho htmlspecode><?php ng> <roL:</sting URestp><strong>T          <     ?>
-                    l'];
- ur_image_['featured = $rowrl $u               ;
-    h_assoc()->fetclt$resu  $row =              0):
-      s >m_row($result->nu  if             );
-  "'' LIMIT 1rl != image_ued_aturLL AND feOT NUS Ne_url Ied_imagHERE featurtems Wlio_ifoM portmage_url FROeatured_iSELECT fquery("nn->$co $result =                
- <?php           dy">
-    bolass="card-     <div c>
-         </div         5>
- lay</hispTest Image D  <h5>    
-          r">ard-headeass="c<div cl   
-         mt-4">"card v class=      <didiv>
-
-  
-        </>       </divle>
-     ab</t           body>
-         </t                while; ?>
-   <?php end                   >
-      </tr                       
-       </td>                           ?>
-                                     }
-                                pan>';
-  RL</sary">No Undsecobadge bg-n class="paho '<s        ec                               else {
-        }                               }
-                                 ;
-      ing</span>'>File miss-danger" bglass="badgean c<sp 'echo                                        
-    e {ls   } e                               n>';
-      /spats<">File exisg-success bass="badgean cl '<sp       echo                                     ath)) {
-ts($file_pisif (file_ex                                   
-       
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

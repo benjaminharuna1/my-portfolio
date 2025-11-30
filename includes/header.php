@@ -9,10 +9,11 @@
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
     <?php
     // Get website settings for favicon
+    require_once __DIR__ . '/image-helper.php';
     $settings = $conn->query("SELECT favicon_url FROM website_settings LIMIT 1")->fetch_assoc();
     if ($settings && $settings['favicon_url']):
     ?>
-    <link rel="icon" href="<?php echo htmlspecialchars($settings['favicon_url']); ?>" type="image/x-icon">
+    <link rel="icon" href="<?php echo getImageUrl($settings['favicon_url']); ?>" type="image/x-icon">
     <?php endif; ?>
 </head>
 <body>
@@ -23,7 +24,7 @@
             if ($settings && $settings['logo_url']):
             ?>
             <a class="navbar-brand fw-bold" href="<?php echo SITE_URL; ?>" style="font-size: 1.5rem; letter-spacing: -0.5px;">
-                <img src="<?php echo htmlspecialchars($settings['logo_url']); ?>" alt="<?php echo SITE_NAME; ?>" style="height: 40px; margin-right: 10px;">
+                <img src="<?php echo getImageUrl($settings['logo_url']); ?>" alt="<?php echo SITE_NAME; ?>" style="height: 40px; margin-right: 10px;">
                 <?php echo SITE_NAME; ?>
             </a>
             <?php else: ?>

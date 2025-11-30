@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'includes/image-helper.php';
 $page_title = 'About';
 $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
 ?>
@@ -12,7 +13,8 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
             
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-4 mb-lg-0">
-                    <img src="<?php echo htmlspecialchars($about['image_url'] ?: 'https://via.placeholder.com/500x600?text=About+Image'); ?>" 
+                    <?php $about_image = getImageWithFallback($about['image_url'] ?? '', 'About Image', 500, 600); ?>
+                    <img src="<?php echo $about_image; ?>" 
                          alt="About" class="img-fluid rounded">
                 </div>
                 <div class="col-lg-6">

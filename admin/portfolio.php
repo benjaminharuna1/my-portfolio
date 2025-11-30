@@ -214,6 +214,27 @@ if (isset($_GET['edit'])) {
                                         <input type="url" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item && !empty($edit_item['featured_image_url']) ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
                                     </div>
 
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="status" class="form-label">Status</label>
+                                            <select class="form-control" id="status" name="status" required>
+                                                <option value="published" <?php echo (!$edit_item || $edit_item['status'] === 'published') ? 'selected' : ''; ?>>Published</option>
+                                                <option value="draft" <?php echo ($edit_item && $edit_item['status'] === 'draft') ? 'selected' : ''; ?>>Draft</option>
+                                            </select>
+                                            <small class="text-muted">Published items are visible on the portfolio page</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Options</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" <?php echo ($edit_item && $edit_item['is_featured']) ? 'checked' : ''; ?>>
+                                                <label class="form-check-label" for="is_featured">
+                                                    Featured Work
+                                                </label>
+                                            </div>
+                                            <small class="text-muted d-block">Featured items appear in the featured works section</small>
+                                        </div>
+                                    </div>
+
                                     <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
                                     <?php if ($edit_item): ?>
                                         <a href="<?php echo SITE_URL; ?>/admin/portfolio.php" class="btn btn-secondary">Cancel</a>
@@ -280,30 +301,37 @@ if (isset($_GET['edit'])) {
                                 <h5>Portfolio Items</h5>
                             </div>
                             <div class="card-body" style="max-height: 600px; overflow-y: auto;">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Category</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        $result = $conn->query("SELECT * FROM portfolio_items ORDER BY created_at DESC");
-                                        while ($item = $result->fetch_assoc()):
-                                        ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars(substr($item['title'] ?? 'Untitled', 0, 15)); ?></td>
-                                                <td><?php echo !empty($item['category']) ? htmlspecialchars($item['category']) : '—'; ?></td>
-                                                <td>
-                                                    <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
-                                                    <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</a>
-                                                </td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
+                                <div style="font-size: 0.85rem;">
+                                    <?php
+                                    $result = $conn->query("SELECT * FROM portfolio_items ORDER BY is_featured DESC, created_at DESC");
+                                    while ($item = $result->fetch_assoc()):
+                                    ?>
+                                        <div class="card mb-2">
+                                            <div class="card-body p-2">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <h6 class="mb-0"><?php echo htmlspecialchars(substr($item['title'] ?? 'Untitled', 0, 20)); ?></h6>
+                                                        <small class="text-muted"><?php echo !empty($item['category']) ? htmlspecialchars($item['category']) : '—'; ?></small>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <?php if ($item['is_featured']): ?>
+                                                        <span class="badge bg-warning text-dark">⭐ Featured</span>
+                                                    <?php endif; ?>
+                                                    <?php if ($item['status'] === 'draft'): ?>
+                                                        <span class="badge bg-secondary">Draft</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-success">Published</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="btn-group btn-group-sm w-100" role="group">
+                                                    <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                                    <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </div>
                             </div>
                         </div>
                     </div>

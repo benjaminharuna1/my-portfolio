@@ -1,5 +1,7 @@
 <?php
 require '../config.php';
+require '../includes/email-config.php';
+require '../includes/admin-list-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -7,16 +9,25 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $page_title = 'Messages';
+$message = '';
 
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $conn->query("DELETE FROM contact_messages WHERE id = $id");
+    $message = '<div class="alert alert-success">Message deleted successfully.</div>';
+    ErrorLogger::log("Message deleted: ID $id", 'INFO');
 }
 
 if (isset($_GET['mark_read'])) {
     $id = intval($_GET['mark_read']);
     $conn->query("UPDATE contact_messages SET is_read = 1 WHERE id = $id");
+    $message = '<div class="alert alert-success">Message marked as read.</div>';
+    ErrorLogger::log("Message marked as read: ID $id", 'INFO');
 }
+
+// Get all messages
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$pagination = getPaginatedItems($conn, 'contact_messages', $page, 15, 'created_at DESC');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,74 +42,49 @@ if (isset($_GET['mark_read'])) {
 <body>
     <div class="container-fluid">
         <div class="row">
-            <nav class="col-md-2 d-md-block bg-dark sidebar">
-                <div class="position-sticky pt-3">
-                    <h5 class="text-white px-3 mb-4">Admin Panel</h5>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php">
-                                <i class="fas fa-chart-line"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/portfolio.php">
-                                <i class="fas fa-briefcase"></i> Portfolio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/services.php">
-                                <i class="fas fa-cogs"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/about.php">
-                                <i class="fas fa-user"></i> About
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo SITE_URL; ?>/admin/messages.php">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/social.php">
-                                <i class="fas fa-share-alt"></i> Social Links
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include '../includes/admin-sidebar.php'; ?>
 
             <main class="col-md-10 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between align-items-center py-4 border-bottom">
                     <h1>Contact Messages</h1>
+                    <span class="badge bg-primary">Total: <?php echo $pagination['total_count']; ?></span>
                 </div>
 
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <table class="table">
-                                    <thead>
+                <?php echo $message; ?>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>All Messages</h5>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        $columns = [
+                            'name' => 'Name',
+                            'email' => 'Email',
+                            'message' => 'Message',
+                            'created_at' => 'Date',
+                            'is_read' => 'Status'
+                        ];
+                        
+                        // Custom display for messages table
+                        if (empty($pagination['items'])) {
+                            echo '<div class="alert alert-info">No messages found.</div>';
+                        } else {
+                            ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
                                         <tr>
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Message</th>
                                             <th>Date</th>
                                             <th>Status</th>
-                                            <th>Actions</th>
+                                            <th style="width: 150px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php
-                                        $result = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
-                                        while ($msg = $result->fetch_assoc()):
-                                        ?>
+                                        <?php foreach ($pagination['items'] as $msg): ?>
                                             <tr <?php echo !$msg['is_read'] ? 'class="table-light"' : ''; ?>>
                                                 <td><?php echo htmlspecialchars($msg['name']); ?></td>
                                                 <td><?php echo htmlspecialchars($msg['email']); ?></td>
@@ -112,19 +98,28 @@ if (isset($_GET['mark_read'])) {
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>
-                                                    <?php if (!$msg['is_read']): ?>
-                                                        <a href="?mark_read=<?php echo $msg['id']; ?>" class="btn btn-sm btn-info">Mark Read</a>
-                                                    <?php endif; ?>
-                                                    <a href="?delete=<?php echo $msg['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</a>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <?php if (!$msg['is_read']): ?>
+                                                            <a href="?mark_read=<?php echo $msg['id']; ?>" class="btn btn-info" title="Mark as Read">
+                                                                <i class="fas fa-check"></i>
+                                                            </a>
+                                                        <?php endif; ?>
+                                                        <a href="?delete=<?php echo $msg['id']; ?>" class="btn btn-danger" title="Delete" onclick="return confirm('Are you sure?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        <?php endwhile; ?>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                            <?php
+                        }
+                        ?>
                     </div>
                 </div>
+                <?php displayPagination($pagination['current_page'], $pagination['total_pages'], SITE_URL . '/admin/messages.php'); ?>
             </main>
         </div>
     </div>

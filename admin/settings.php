@@ -17,57 +17,80 @@ if (!$settings) {
     $settings = $conn->query("SELECT * FROM website_settings LIMIT 1")->fetch_assoc();
 }
 
+// Get email settings
+$email_settings = $conn->query("SELECT * FROM email_settings LIMIT 1")->fetch_assoc();
+if (!$email_settings) {
+    $conn->query("INSERT INTO email_settings (smtp_host, smtp_port, smtp_username, smtp_password, from_email, from_name, admin_email, enable_notifications) VALUES ('', 587, '', '', '', 'Portfolio', '', 1)");
+    $email_settings = $conn->query("SELECT * FROM email_settings LIMIT 1")->fetch_assoc();
+}
+
 // Update settings
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_settings') {
-    $website_name = $conn->real_escape_string($_POST['website_name']);
-    $website_description = $conn->real_escape_string($_POST['website_description']);
-    $logo_url = $conn->real_escape_string($_POST['logo_url']);
-    $favicon_url = $conn->real_escape_string($_POST['favicon_url']);
-    $logo_filename = '';
-    $favicon_filename = '';
-    
-    // Handle logo upload
-    if (isset($_FILES['logo']) && $_FILES['logo']['error'] === 0) {
-        $upload = uploadImage($_FILES['logo']);
-        if ($upload['success']) {
-            $logo_filename = $upload['filename'];
-            $logo_url = $upload['url'];
-        } else {
-            $message = '<div class="alert alert-danger">Logo upload failed: ' . $upload['message'] . '</div>';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'update_settings') {
+        $website_name = $conn->real_escape_string($_POST['website_name']);
+        $website_description = $conn->real_escape_string($_POST['website_description']);
+        $logo_url = $conn->real_escape_string($_POST['logo_url']);
+        $favicon_url = $conn->real_escape_string($_POST['favicon_url']);
+        $logo_filename = '';
+        $favicon_filename = '';
+        
+        // Handle logo upload
+        if (isset($_FILES['logo']) && $_FILES['logo']['error'] === 0) {
+            $upload = uploadImage($_FILES['logo']);
+            if ($upload['success']) {
+                $logo_filename = $upload['filename'];
+                $logo_url = $upload['url'];
+            } else {
+                $message = '<div class="alert alert-danger">Logo upload failed: ' . $upload['message'] . '</div>';
+            }
         }
-    }
-    
-    // Handle favicon upload
-    if (isset($_FILES['favicon']) && $_FILES['favicon']['error'] === 0) {
-        $upload = uploadImage($_FILES['favicon']);
-        if ($upload['success']) {
-            $favicon_filename = $upload['filename'];
-            $favicon_url = $upload['url'];
-        } else {
-            $message = '<div class="alert alert-danger">Favicon upload failed: ' . $upload['message'] . '</div>';
+        
+        // Handle favicon upload
+        if (isset($_FILES['favicon']) && $_FILES['favicon']['error'] === 0) {
+            $upload = uploadImage($_FILES['favicon']);
+            if ($upload['success']) {
+                $favicon_filename = $upload['filename'];
+                $favicon_url = $upload['url'];
+            } else {
+                $message = '<div class="alert alert-danger">Favicon upload failed: ' . $upload['message'] . '</div>';
+            }
         }
+        
+        // Build update query
+        $update_parts = array(
+            "website_name='$website_name'",
+            "website_description='$website_description'",
+            "logo_url='$logo_url'",
+            "favicon_url='$favicon_url'"
+        );
+        
+        if ($logo_filename) {
+            $update_parts[] = "logo_filename='$logo_filename'";
+        }
+        if ($favicon_filename) {
+            $update_parts[] = "favicon_filename='$favicon_filename'";
+        }
+        
+        $update_query = "UPDATE website_settings SET " . implode(", ", $update_parts) . " WHERE id = " . $settings['id'];
+        $conn->query($update_query);
+        
+        $message = '<div class="alert alert-success">Website settings updated successfully!</div>';
+        $settings = $conn->query("SELECT * FROM website_settings LIMIT 1")->fetch_assoc();
+    } elseif ($_POST['action'] === 'update_email_settings') {
+        $smtp_host = $conn->real_escape_string($_POST['smtp_host']);
+        $smtp_port = intval($_POST['smtp_port']);
+        $smtp_username = $conn->real_escape_string($_POST['smtp_username']);
+        $smtp_password = $conn->real_escape_string($_POST['smtp_password']);
+        $from_email = $conn->real_escape_string($_POST['from_email']);
+        $from_name = $conn->real_escape_string($_POST['from_name']);
+        $admin_email = $conn->real_escape_string($_POST['admin_email']);
+        $enable_notifications = isset($_POST['enable_notifications']) ? 1 : 0;
+        
+        $conn->query("UPDATE email_settings SET smtp_host='$smtp_host', smtp_port=$smtp_port, smtp_username='$smtp_username', smtp_password='$smtp_password', from_email='$from_email', from_name='$from_name', admin_email='$admin_email', enable_notifications=$enable_notifications WHERE id = " . $email_settings['id']);
+        
+        $message = '<div class="alert alert-success">Email settings updated successfully!</div>';
+        $email_settings = $conn->query("SELECT * FROM email_settings LIMIT 1")->fetch_assoc();
     }
-    
-    // Build update query
-    $update_parts = array(
-        "website_name='$website_name'",
-        "website_description='$website_description'",
-        "logo_url='$logo_url'",
-        "favicon_url='$favicon_url'"
-    );
-    
-    if ($logo_filename) {
-        $update_parts[] = "logo_filename='$logo_filename'";
-    }
-    if ($favicon_filename) {
-        $update_parts[] = "favicon_filename='$favicon_filename'";
-    }
-    
-    $update_query = "UPDATE website_settings SET " . implode(", ", $update_parts) . " WHERE id = " . $settings['id'];
-    $conn->query($update_query);
-    
-    $message = '<div class="alert alert-success">Website settings updated successfully!</div>';
-    $settings = $conn->query("SELECT * FROM website_settings LIMIT 1")->fetch_assoc();
 }
 ?>
 <!DOCTYPE html>
@@ -87,59 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block bg-dark sidebar">
-                <div class="position-sticky pt-3">
-                    <h5 class="text-white px-3 mb-4">Admin Panel</h5>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php">
-                                <i class="fas fa-chart-line"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/portfolio.php">
-                                <i class="fas fa-briefcase"></i> Portfolio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/services.php">
-                                <i class="fas fa-cogs"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/about.php">
-                                <i class="fas fa-user"></i> About
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/messages.php">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/social.php">
-                                <i class="fas fa-share-alt"></i> Social Links
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/profile.php">
-                                <i class="fas fa-user-circle"></i> My Profile
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo SITE_URL; ?>/admin/settings.php">
-                                <i class="fas fa-cog"></i> Website Settings
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include '../includes/admin-sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4">
@@ -226,6 +197,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save"></i> Save Settings
                             </button>
+                        </form>
+
+                        <!-- Email Settings -->
+                        <form method="POST" class="mt-5">
+                            <input type="hidden" name="action" value="update_email_settings">
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Email Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <strong>Note:</strong> Configure SMTP settings to enable email notifications for reviews and contact messages.
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="smtp_host" class="form-label">SMTP Host</label>
+                                        <input type="text" class="form-control" id="smtp_host" name="smtp_host" value="<?php echo htmlspecialchars($email_settings['smtp_host'] ?? ''); ?>" placeholder="smtp.gmail.com">
+                                        <small class="text-muted">e.g., smtp.gmail.com, smtp.mailtrap.io</small>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_port" class="form-label">SMTP Port</label>
+                                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" value="<?php echo $email_settings['smtp_port'] ?? 587; ?>" placeholder="587">
+                                            <small class="text-muted">Usually 587 (TLS) or 465 (SSL)</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="from_email" class="form-label">From Email Address</label>
+                                            <input type="email" class="form-control" id="from_email" name="from_email" value="<?php echo htmlspecialchars($email_settings['from_email'] ?? ''); ?>" placeholder="noreply@example.com">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="from_name" class="form-label">From Name</label>
+                                        <input type="text" class="form-control" id="from_name" name="from_name" value="<?php echo htmlspecialchars($email_settings['from_name'] ?? 'Portfolio'); ?>" placeholder="Portfolio">
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_username" class="form-label">SMTP Username</label>
+                                            <input type="text" class="form-control" id="smtp_username" name="smtp_username" value="<?php echo htmlspecialchars($email_settings['smtp_username'] ?? ''); ?>" placeholder="your-email@gmail.com">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="smtp_password" class="form-label">SMTP Password</label>
+                                            <input type="password" class="form-control" id="smtp_password" name="smtp_password" value="<?php echo htmlspecialchars($email_settings['smtp_password'] ?? ''); ?>" placeholder="••••••••">
+                                            <small class="text-muted">For Gmail, use an App Password, not your regular password</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="admin_email" class="form-label">Admin Email Address</label>
+                                        <input type="email" class="form-control" id="admin_email" name="admin_email" value="<?php echo htmlspecialchars($email_settings['admin_email'] ?? ''); ?>" placeholder="admin@example.com">
+                                        <small class="text-muted">Where to send notifications about reviews and messages</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enable_notifications" name="enable_notifications" <?php echo ($email_settings['enable_notifications'] ?? 1) ? 'checked' : ''; ?>>
+                                            <label class="form-check-label" for="enable_notifications">
+                                                Enable Email Notifications
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">Send notifications for new reviews and contact messages</small>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save"></i> Save Email Settings
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
 

@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/admin-list-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -38,6 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (isset($_FILES['client_image']) && $_FILES['client_image']['error'] === 0) {
         $upload = uploadImage($_FILES['client_image']);
         if ($upload['success']) {
+            // Delete old image if exists and new image is being uploaded
+            if (isset($_POST['id']) && $_POST['id']) {
+                $old_testimonial = $conn->query("SELECT client_image_filename FROM testimonials WHERE id = " . intval($_POST['id']))->fetch_assoc();
+                if ($old_testimonial && !empty($old_testimonial['client_image_filename'])) {
+                    deleteImage($old_testimonial['client_image_filename']);
+                }
+            }
             $client_image_filename = $upload['filename'];
             $client_image_url = $upload['url'];
         } else {
@@ -52,20 +60,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             $conn->query("UPDATE testimonials SET client_name='$client_name', client_title='$client_title', client_company='$client_company', testimonial_text='$testimonial_text', rating=$rating, is_featured=$is_featured, is_active=$is_active, client_image_url='$client_image_url' WHERE id=$id");
         }
-        $message = '<div class="alert alert-success">Testimonial updated.</div>';
+        $message = '<div class="alert alert-success">Testimonial updated successfully.</div>';
         ErrorLogger::log("Testimonial updated: ID $id", 'INFO');
     } else {
         $conn->query("INSERT INTO testimonials (client_name, client_title, client_company, testimonial_text, rating, is_featured, is_active, client_image_url, client_image_filename) VALUES ('$client_name', '$client_title', '$client_company', '$testimonial_text', $rating, $is_featured, $is_active, '$client_image_url', '$client_image_filename')");
-        $message = '<div class="alert alert-success">Testimonial added.</div>';
+        $message = '<div class="alert alert-success">Testimonial added successfully.</div>';
         ErrorLogger::log("Testimonial created: $client_name", 'INFO');
     }
 }
 
 $edit_item = null;
+$show_form = false;
 if (isset($_GET['edit'])) {
-    $id = intval($_GET['edit']);
-    $edit_item = $conn->query("SELECT * FROM testimonials WHERE id = $id")->fetch_assoc();
+    $show_form = true;
+    if ($_GET['edit'] !== 'new') {
+        $id = intval($_GET['edit']);
+        $edit_item = $conn->query("SELECT * FROM testimonials WHERE id = $id")->fetch_assoc();
+    }
+    // If edit=new, $edit_item stays null and form shows as "Add New"
 }
+
+// Get all testimonials
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$pagination = getPaginatedItems($conn, 'testimonials', $page, 10, 'id DESC');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -91,10 +108,44 @@ if (isset($_GET['edit'])) {
             <main class="col-md-10 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between align-items-center py-4 border-bottom">
                     <h1>Manage Testimonials</h1>
+                    <?php if (!$edit_item): ?>
+                        <a href="?edit=new" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add New Testimonial
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <?php echo $message; ?>
 
+                <!-- Testimonials List Table -->
+                <?php if (!$show_form): ?>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>All Testimonials (<?php echo $pagination['total_count']; ?>)</h5>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        $columns = [
+                            'client_name' => 'Client Name',
+                            'client_title' => 'Title',
+                            'client_company' => 'Company',
+                            'rating' => 'Rating',
+                            'is_featured' => 'Featured',
+                            'is_active' => 'Active'
+                        ];
+                        displayAdminTable(
+                            $pagination['items'],
+                            $columns,
+                            SITE_URL . '/admin/testimonials.php?edit=%d',
+                            SITE_URL . '/admin/testimonials.php?delete=%d'
+                        );
+                        ?>
+                    </div>
+                </div>
+                <?php displayPagination($pagination['current_page'], $pagination['total_pages'], SITE_URL . '/admin/testimonials.php'); ?>
+                <?php else: ?>
+
+                <!-- Edit/Add Form -->
                 <div class="row mt-4">
                     <div class="col-md-8">
                         <div class="card">
@@ -171,54 +222,20 @@ if (isset($_GET['edit'])) {
                                         <input type="url" class="form-control" id="client_image_url" name="client_image_url" value="<?php echo $edit_item && !empty($edit_item['client_image_url']) ? htmlspecialchars($edit_item['client_image_url']) : ''; ?>" placeholder="https://...">
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
-                                    <?php if ($edit_item): ?>
-                                        <a href="<?php echo SITE_URL; ?>/admin/testimonials.php" class="btn btn-secondary">Cancel</a>
-                                    <?php endif; ?>
+                                    <div class="btn-group" role="group">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> <?php echo ($edit_item && isset($edit_item['id'])) ? 'Update' : 'Add'; ?> Testimonial
+                                        </button>
+                                        <a href="<?php echo SITE_URL; ?>/admin/testimonials.php" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                    </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Testimonials</h5>
-                            </div>
-                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
-                                <?php
-                                $result = $conn->query("SELECT * FROM testimonials ORDER BY is_featured DESC, created_at DESC");
-                                if ($result->num_rows > 0):
-                                    while ($item = $result->fetch_assoc()):
-                                ?>
-                                    <div class="card mb-3">
-                                        <div class="card-body p-3">
-                                            <h6 class="card-title"><?php echo htmlspecialchars($item['client_name'] ?? 'Untitled'); ?></h6>
-                                            <p class="card-text small text-muted"><?php echo !empty($item['client_title']) ? htmlspecialchars($item['client_title']) : '—'; ?></p>
-                                            <div class="rating-display mb-2">
-                                                <?php for ($i = 0; $i < $item['rating']; $i++): ?>
-                                                    <i class="fas fa-star"></i>
-                                                <?php endfor; ?>
-                                                <?php for ($i = $item['rating']; $i < 5; $i++): ?>
-                                                    <i class="far fa-star"></i>
-                                                <?php endfor; ?>
-                                            </div>
-                                            <div class="btn-group btn-group-sm w-100" role="group">
-                                                <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-warning">Edit</a>
-                                                <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-danger" onclick="return confirm('Delete?')">Delete</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php
-                                    endwhile;
-                                else:
-                                ?>
-                                    <p class="text-muted">No testimonials yet.</p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+                <?php endif; ?>
             </main>
         </div>
     </div>

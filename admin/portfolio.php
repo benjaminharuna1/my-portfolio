@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/admin-list-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -25,7 +26,8 @@ if (isset($_GET['delete'])) {
         }
     }
     $conn->query("DELETE FROM portfolio_items WHERE id = $id");
-    $message = '<div class="alert alert-success">Portfolio item deleted.</div>';
+    $message = '<div class="alert alert-success">Portfolio item deleted successfully.</div>';
+    ErrorLogger::log("Portfolio item deleted: ID $id", 'INFO');
 }
 
 // Delete portfolio image
@@ -36,7 +38,8 @@ if (isset($_GET['delete_image'])) {
         deleteImage($image['image_filename']);
     }
     $conn->query("DELETE FROM portfolio_images WHERE id = $image_id");
-    $message = '<div class="alert alert-success">Image deleted.</div>';
+    $message = '<div class="alert alert-success">Image deleted successfully.</div>';
+    ErrorLogger::log("Portfolio image deleted: ID $image_id", 'INFO');
 }
 
 // Add/Edit portfolio item
@@ -76,11 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             $conn->query("UPDATE portfolio_items SET title='$title', description='$description', body='$body', category='$category', link='$link', featured_image_url='$featured_image_url', status='$status', is_featured=$is_featured WHERE id=$id");
         }
-        $message = '<div class="alert alert-success">Portfolio item updated.</div>';
+        $message = '<div class="alert alert-success">Portfolio item updated successfully.</div>';
         ErrorLogger::log("Portfolio item updated: ID $id, Status: $status, Featured: $is_featured", 'INFO');
     } else {
         $conn->query("INSERT INTO portfolio_items (title, description, body, category, link, featured_image_url, featured_image_filename, status, is_featured) VALUES ('$title', '$description', '$body', '$category', '$link', '$featured_image_url', '$featured_image_filename', '$status', $is_featured)");
-        $message = '<div class="alert alert-success">Portfolio item added.</div>';
+        $message = '<div class="alert alert-success">Portfolio item added successfully.</div>';
         ErrorLogger::log("Portfolio item created: $title, Status: $status", 'INFO');
     }
 }
@@ -102,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $sort_order = ($sort_order === null) ? 0 : $sort_order + 1;
             
             $conn->query("INSERT INTO portfolio_images (portfolio_id, image_url, image_filename, alt_text, sort_order) VALUES ($portfolio_id, '$image_url', '$image_filename', '$alt_text', $sort_order)");
-            $message = '<div class="alert alert-success">Image added to portfolio.</div>';
+            $message = '<div class="alert alert-success">Image added to portfolio successfully.</div>';
         } else {
             $message = '<div class="alert alert-danger">' . $upload['message'] . '</div>';
         }
@@ -110,10 +113,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 $edit_item = null;
+$show_form = false;
 if (isset($_GET['edit'])) {
-    $id = intval($_GET['edit']);
-    $edit_item = $conn->query("SELECT * FROM portfolio_items WHERE id = $id")->fetch_assoc();
+    $show_form = true;
+    if ($_GET['edit'] !== 'new') {
+        $id = intval($_GET['edit']);
+        $edit_item = $conn->query("SELECT * FROM portfolio_items WHERE id = $id")->fetch_assoc();
+    }
+    // If edit=new, $edit_item stays null and form shows as "Add New"
 }
+
+// Get all portfolio items
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -153,10 +165,43 @@ if (isset($_GET['edit'])) {
             <main class="col-md-10 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between align-items-center py-4 border-bottom">
                     <h1>Manage Portfolio</h1>
+                    <?php if (!$edit_item): ?>
+                        <a href="?edit=new" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add New Portfolio Item
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <?php echo $message; ?>
 
+                <!-- Portfolio Items List Table -->
+                <?php if (!$show_form): ?>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>All Portfolio Items (<?php echo $pagination['total_count']; ?>)</h5>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        $columns = [
+                            'title' => 'Title',
+                            'category' => 'Category',
+                            'featured_image_url' => 'Image',
+                            'status' => 'Status',
+                            'is_featured' => 'Featured'
+                        ];
+                        displayAdminTable(
+                            $pagination['items'],
+                            $columns,
+                            SITE_URL . '/admin/portfolio.php?edit=%d',
+                            SITE_URL . '/admin/portfolio.php?delete=%d'
+                        );
+                        ?>
+                    </div>
+                </div>
+                <?php displayPagination($pagination['current_page'], $pagination['total_pages'], SITE_URL . '/admin/portfolio.php'); ?>
+                <?php else: ?>
+
+                <!-- Edit/Add Form -->
                 <div class="row mt-4">
                     <div class="col-md-8">
                         <div class="card">
@@ -235,10 +280,14 @@ if (isset($_GET['edit'])) {
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
-                                    <?php if ($edit_item): ?>
-                                        <a href="<?php echo SITE_URL; ?>/admin/portfolio.php" class="btn btn-secondary">Cancel</a>
-                                    <?php endif; ?>
+                                    <div class="btn-group" role="group">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> <?php echo ($edit_item && isset($edit_item['id'])) ? 'Update' : 'Add'; ?> Portfolio Item
+                                        </button>
+                                        <a href="<?php echo SITE_URL; ?>/admin/portfolio.php" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -294,48 +343,8 @@ if (isset($_GET['edit'])) {
                         </div>
                         <?php endif; ?>
                     </div>
-
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Portfolio Items</h5>
-                            </div>
-                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
-                                <div style="font-size: 0.85rem;">
-                                    <?php
-                                    $result = $conn->query("SELECT * FROM portfolio_items ORDER BY is_featured DESC, created_at DESC");
-                                    while ($item = $result->fetch_assoc()):
-                                    ?>
-                                        <div class="card mb-2">
-                                            <div class="card-body p-2">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <div>
-                                                        <h6 class="mb-0"><?php echo htmlspecialchars(substr($item['title'] ?? 'Untitled', 0, 20)); ?></h6>
-                                                        <small class="text-muted"><?php echo !empty($item['category']) ? htmlspecialchars($item['category']) : '—'; ?></small>
-                                                    </div>
-                                                </div>
-                                                <div class="mb-2">
-                                                    <?php if ($item['is_featured']): ?>
-                                                        <span class="badge bg-warning text-dark">⭐ Featured</span>
-                                                    <?php endif; ?>
-                                                    <?php if ($item['status'] === 'draft'): ?>
-                                                        <span class="badge bg-secondary">Draft</span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-success">Published</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="btn-group btn-group-sm w-100" role="group">
-                                                    <a href="?edit=<?php echo $item['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                                                    <a href="?delete=<?php echo $item['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete?')">Delete</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endwhile; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+                <?php endif; ?>
             </main>
         </div>
     </div>
@@ -355,6 +364,7 @@ if (isset($_GET['edit'])) {
                     ['clean']
                 ]
             }
+        });
         });
 
         // Load existing content

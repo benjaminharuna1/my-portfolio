@@ -50,6 +50,10 @@ $conn->set_charset("utf8");
 // Load database helper functions
 require_once __DIR__ . '/includes/db-helper.php';
 
+// Load migrations
+require_once __DIR__ . '/includes/migrations.php';
+DatabaseMigrations::runAll($conn);
+
 // Session configuration
 ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
 session_set_cookie_params(['lifetime' => SESSION_LIFETIME]);

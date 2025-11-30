@@ -21,59 +21,7 @@ $page_title = 'Admin Dashboard';
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block bg-dark sidebar">
-                <div class="position-sticky pt-3">
-                    <h5 class="text-white px-3 mb-4">Admin Panel</h5>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo SITE_URL; ?>/admin/dashboard.php">
-                                <i class="fas fa-chart-line"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/portfolio.php">
-                                <i class="fas fa-briefcase"></i> Portfolio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/services.php">
-                                <i class="fas fa-cogs"></i> Services
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/about.php">
-                                <i class="fas fa-user"></i> About
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/messages.php">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/social.php">
-                                <i class="fas fa-share-alt"></i> Social Links
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/profile.php">
-                                <i class="fas fa-user-circle"></i> My Profile
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/settings.php">
-                                <i class="fas fa-cog"></i> Website Settings
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <?php include '../includes/admin-sidebar.php'; ?>
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4">

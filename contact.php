@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'includes/email-config.php';
 $page_title = 'Contact';
 $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
 $message = '';
@@ -11,7 +12,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($name && $email && $msg) {
         $conn->query("INSERT INTO contact_messages (name, email, message) VALUES ('$name', '$email', '$msg')");
-        $message = '<div class="alert alert-success">Thank you! Your message has been sent.</div>';
+        
+        // Load email config
+        EmailConfig::load($conn);
+        
+        // Send notification to admin
+        if (EmailConfig::get('enable_notifications') && EmailConfig::get('admin_email')) {
+            $admin_email_data = EmailTemplate::contactNotificationAdmin($name, $email, $msg);
+            EmailConfig::sendEmail(
+                EmailConfig::get('admin_email'),
+                $admin_email_data['subject'],
+                $admin_email_data['body'],
+                true
+            );
+        }
+        
+        // Send confirmation to user
+        $user_email_data = EmailTemplate::contactConfirmation($name);
+        EmailConfig::sendEmail(
+            $email,
+            $user_email_data['subject'],
+            $user_email_data['body'],
+            true
+        );
+        
+        $message = '<div class="alert alert-success">Thank you! Your message has been sent. We will get back to you within 24 hours.</div>';
     } else {
         $message = '<div class="alert alert-danger">Please fill in all fields.</div>';
     }

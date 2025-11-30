@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
 require 'includes/image-helper.php';
+require 'includes/email-config.php';
 $page_title = 'Portfolio Detail';
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -12,6 +13,46 @@ if (!$portfolio) {
 }
 
 $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id ORDER BY sort_order");
+
+// Handle review submission
+$review_message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_review') {
+    $reviewer_name = $conn->real_escape_string($_POST['reviewer_name']);
+    $reviewer_email = $conn->real_escape_string($_POST['reviewer_email']);
+    $rating = intval($_POST['rating']);
+    $review_text = $conn->real_escape_string($_POST['review_text']);
+    
+    if ($reviewer_name && $reviewer_email && $rating && $review_text) {
+        $conn->query("INSERT INTO portfolio_ratings (portfolio_id, rating, review_text, reviewer_name, reviewer_email, is_approved) VALUES ($id, $rating, '$review_text', '$reviewer_name', '$reviewer_email', 0)");
+        
+        // Load email config
+        EmailConfig::load($conn);
+        
+        // Send notification to admin
+        if (EmailConfig::get('enable_notifications') && EmailConfig::get('admin_email')) {
+            $admin_email_data = EmailTemplate::reviewNotificationAdmin($reviewer_name, $rating, $review_text, $portfolio['title']);
+            EmailConfig::sendEmail(
+                EmailConfig::get('admin_email'),
+                $admin_email_data['subject'],
+                $admin_email_data['body'],
+                true
+            );
+        }
+        
+        // Send confirmation to reviewer
+        $reviewer_email_data = EmailTemplate::reviewConfirmation($reviewer_name, $portfolio['title']);
+        EmailConfig::sendEmail(
+            $reviewer_email,
+            $reviewer_email_data['subject'],
+            $reviewer_email_data['body'],
+            true
+        );
+        
+        $review_message = '<div class="alert alert-success">Thank you for your review! It will be displayed after approval.</div>';
+    } else {
+        $review_message = '<div class="alert alert-danger">Please fill in all fields.</div>';
+    }
+}
 ?>
 <?php include 'includes/header.php'; ?>
 
@@ -108,6 +149,88 @@ $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = $id 
                     <a href="<?php echo SITE_URL; ?>/portfolio.php" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left"></i> Back to Portfolio
                     </a>
+                </div>
+            </div>
+
+            <!-- Review Section -->
+            <div class="row mt-5">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Leave a Review</h5>
+                        </div>
+                        <div class="card-body">
+                            <?php echo $review_message; ?>
+                            <form method="POST">
+                                <input type="hidden" name="action" value="submit_review">
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="reviewer_name" class="form-label">Your Name</label>
+                                        <input type="text" class="form-control" id="reviewer_name" name="reviewer_name" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="reviewer_email" class="form-label">Your Email</label>
+                                        <input type="email" class="form-control" id="reviewer_email" name="reviewer_email" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="rating" class="form-label">Rating</label>
+                                    <select class="form-control" id="rating" name="rating" required>
+                                        <option value="">Select a rating</option>
+                                        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                                        <option value="4">⭐⭐⭐⭐ Good</option>
+                                        <option value="3">⭐⭐⭐ Average</option>
+                                        <option value="2">⭐⭐ Fair</option>
+                                        <option value="1">⭐ Poor</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="review_text" class="form-label">Your Review</label>
+                                    <textarea class="form-control" id="review_text" name="review_text" rows="4" placeholder="Share your thoughts about this project..." required></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Submit Review
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Approved Reviews -->
+                    <?php
+                    $reviews = $conn->query("SELECT * FROM portfolio_ratings WHERE portfolio_id = $id AND is_approved = 1 ORDER BY created_at DESC");
+                    if ($reviews && $reviews->num_rows > 0):
+                    ?>
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5>Reviews</h5>
+                        </div>
+                        <div class="card-body">
+                            <?php while ($review = $reviews->fetch_assoc()): ?>
+                            <div class="review-item mb-4 pb-4 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-0"><?php echo htmlspecialchars($review['reviewer_name']); ?></h6>
+                                        <small class="text-muted"><?php echo date('M d, Y', strtotime($review['created_at'])); ?></small>
+                                    </div>
+                                    <div class="rating-stars">
+                                        <?php for ($i = 0; $i < $review['rating']; $i++): ?>
+                                            <i class="fas fa-star" style="color: #ffc107;"></i>
+                                        <?php endfor; ?>
+                                        <?php for ($i = $review['rating']; $i < 5; $i++): ?>
+                                            <i class="far fa-star" style="color: #ddd;"></i>
+                                        <?php endfor; ?>
+                                    </div>
+                                </div>
+                                <p><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
+                            </div>
+                            <?php endwhile; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

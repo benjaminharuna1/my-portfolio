@@ -27,7 +27,11 @@ $page_title = 'Home';
                 </div>
                 <div class="col-lg-6">
                     <div class="hero-image">
-                        <img src="https://via.placeholder.com/500x600?text=Portfolio+Image" alt="Hero" class="img-fluid rounded">
+                        <?php 
+                        $about = $conn->query("SELECT image_url FROM about LIMIT 1")->fetch_assoc();
+                        $hero_image = getImageWithFallback($about['image_url'] ?? '', 'Hero Image', 500, 600);
+                        ?>
+                        <img src="<?php echo $hero_image; ?>" alt="Hero" class="img-fluid rounded hero-img">
                     </div>
                 </div>
             </div>

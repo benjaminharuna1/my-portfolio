@@ -1,5 +1,6 @@
 <?php
 require '../config.php';
+require '../includes/upload.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -12,6 +13,10 @@ $message = '';
 // Delete
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
+    $item = $conn->query("SELECT image_filename FROM portfolio_items WHERE id = $id")->fetch_assoc();
+    if ($item && $item['image_filename']) {
+        deleteImage($item['image_filename'], '../uploads');
+    }
     $conn->query("DELETE FROM portfolio_items WHERE id = $id");
     $message = '<div class="alert alert-success">Portfolio item deleted.</div>';
 }
@@ -23,13 +28,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category = $conn->real_escape_string($_POST['category']);
     $link = $conn->real_escape_string($_POST['link']);
     $image_url = $conn->real_escape_string($_POST['image_url']);
+    $image_filename = '';
+    
+    // Handle image upload
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+        $upload = uploadImage($_FILES['image'], '../uploads');
+        if ($upload['success']) {
+            $image_filename = $upload['filename'];
+            $image_url = $upload['url'];
+        } else {
+            $message = '<div class="alert alert-danger">' . $upload['message'] . '</div>';
+        }
+    }
     
     if (isset($_POST['id']) && $_POST['id']) {
         $id = intval($_POST['id']);
-        $conn->query("UPDATE portfolio_items SET title='$title', description='$description', category='$category', link='$link', image_url='$image_url' WHERE id=$id");
+        if ($image_filename) {
+            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', category='$category', link='$link', image_url='$image_url', image_filename='$image_filename' WHERE id=$id");
+        } else {
+            $conn->query("UPDATE portfolio_items SET title='$title', description='$description', category='$category', link='$link', image_url='$image_url' WHERE id=$id");
+        }
         $message = '<div class="alert alert-success">Portfolio item updated.</div>';
     } else {
-        $conn->query("INSERT INTO portfolio_items (title, description, category, link, image_url) VALUES ('$title', '$description', '$category', '$link', '$image_url')");
+        $conn->query("INSERT INTO portfolio_items (title, description, category, link, image_url, image_filename) VALUES ('$title', '$description', '$category', '$link', '$image_url', '$image_filename')");
         $message = '<div class="alert alert-success">Portfolio item added.</div>';
     }
 }
@@ -112,7 +133,7 @@ if (isset($_GET['edit'])) {
                                 <h5><?php echo $edit_item ? 'Edit Portfolio Item' : 'Add New Portfolio Item'; ?></h5>
                             </div>
                             <div class="card-body">
-                                <form method="POST">
+                                <form method="POST" enctype="multipart/form-data">
                                     <?php if ($edit_item): ?>
                                         <input type="hidden" name="id" value="<?php echo $edit_item['id']; ?>">
                                     <?php endif; ?>
@@ -133,8 +154,19 @@ if (isset($_GET['edit'])) {
                                         <input type="url" class="form-control" id="link" name="link" value="<?php echo $edit_item ? htmlspecialchars($edit_item['link']) : ''; ?>">
                                     </div>
                                     <div class="mb-3">
-                                        <label for="image_url" class="form-label">Image URL</label>
-                                        <input type="url" class="form-control" id="image_url" name="image_url" value="<?php echo $edit_item ? htmlspecialchars($edit_item['image_url']) : ''; ?>">
+                                        <label for="image" class="form-label">Upload Image</label>
+                                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                        <small class="text-muted">Max 5MB. Formats: JPG, PNG, GIF, WebP</small>
+                                        <?php if ($edit_item && $edit_item['image_url']): ?>
+                                            <div class="mt-2">
+                                                <img src="<?php echo htmlspecialchars($edit_item['image_url']); ?>" alt="Current" style="max-width: 150px; border-radius: 5px;">
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="image_url" class="form-label">Or Image URL</label>
+                                        <input type="url" class="form-control" id="image_url" name="image_url" value="<?php echo $edit_item ? htmlspecialchars($edit_item['image_url']) : ''; ?>" placeholder="https://...">
+                                        <small class="text-muted">Use this if not uploading a file</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
                                     <?php if ($edit_item): ?>

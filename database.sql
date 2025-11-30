@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
     image_url VARCHAR(255),
     category VARCHAR(100),
     link VARCHAR(255),
+    image_filename VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS services (
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
     icon VARCHAR(100),
+    tech_icons TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -34,6 +36,7 @@ CREATE TABLE IF NOT EXISTS about (
     subtitle VARCHAR(255),
     description TEXT NOT NULL,
     image_url VARCHAR(255),
+    image_filename VARCHAR(255),
     email VARCHAR(100),
     phone VARCHAR(20),
     location VARCHAR(255),
@@ -62,10 +65,10 @@ INSERT INTO users (username, password, email) VALUES
 ('admin', '$2y$10$YIjlrDxR8.8Yd8Yd8Yd8eYIjlrDxR8.8Yd8Yd8Yd8eYIjlrDxR8.8', 'admin@portfolio.com');
 
 -- Insert sample data
-INSERT INTO services (title, description, icon) VALUES 
-('Web Design', 'Creating beautiful and responsive web designs', 'fa-palette'),
-('Web Development', 'Building robust and scalable web applications', 'fa-code'),
-('UI/UX Design', 'Designing intuitive user interfaces and experiences', 'fa-pencil-ruler');
+INSERT INTO services (title, description, icon, tech_icons) VALUES 
+('Web Design', 'Creating beautiful and responsive web designs', 'fa-palette', 'fab fa-figma, fab fa-adobe, fab fa-sketch'),
+('Web Development', 'Building robust and scalable web applications', 'fa-code', 'fab fa-php, fab fa-laravel, fab fa-js, fab fa-react'),
+('UI/UX Design', 'Designing intuitive user interfaces and experiences', 'fa-pencil-ruler', 'fab fa-figma, fab fa-adobe, fab fa-invision');
 
 INSERT INTO about (title, subtitle, description, email, phone, location) VALUES 
 ('About Me', 'Web Developer & Designer', 'I am a passionate web developer and designer with expertise in creating beautiful and functional websites.', 'contact@portfolio.com', '+1 (555) 123-4567', 'New York, USA');

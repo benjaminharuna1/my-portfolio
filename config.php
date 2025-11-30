@@ -6,7 +6,7 @@ define('DB_PASS', '');
 define('DB_NAME', 'portfolio');
 
 // Site Configuration
-define('SITE_URL', 'http://localhost/portfolio');
+define('SITE_URL', 'http://localhost/my-portfolio');
 define('SITE_NAME', 'My Portfolio');
 define('ADMIN_EMAIL', 'admin@portfolio.com');
 

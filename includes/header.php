@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="<?php echo SITE_URL; ?>">
-                <i class="fas fa-code"></i> <?php echo SITE_NAME; ?>
+            <a class="navbar-brand fw-bold" href="<?php echo SITE_URL; ?>" style="font-size: 1.5rem; letter-spacing: -0.5px;">
+                <i class="fas fa-code" style="color: #667eea;"></i> <?php echo SITE_NAME; ?>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -20,27 +20,27 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/index.php">Home</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/index.php" style="transition: all 0.3s ease;">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/about.php">About</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/about.php" style="transition: all 0.3s ease;">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/portfolio.php">Portfolio</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/portfolio.php" style="transition: all 0.3s ease;">Portfolio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo SITE_URL; ?>/contact.php">Contact</a>
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/contact.php" style="transition: all 0.3s ease;">Contact</a>
                     </li>
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php">Admin</a>
+                            <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/dashboard.php" style="transition: all 0.3s ease;">Admin</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php">Logout</a>
+                            <a class="nav-link" href="<?php echo SITE_URL; ?>/logout.php" style="transition: all 0.3s ease;">Logout</a>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo SITE_URL; ?>/login.php">Login</a>
+                            <a class="nav-link btn btn-primary btn-sm text-white ms-2" href="<?php echo SITE_URL; ?>/login.php" style="transition: all 0.3s ease;">Login</a>
                         </li>
                     <?php endif; ?>
                 </ul>

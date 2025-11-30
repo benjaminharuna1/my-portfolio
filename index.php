@@ -43,11 +43,25 @@ $page_title = 'Home';
                 while ($service = $result->fetch_assoc()):
                 ?>
                     <div class="col-md-4 mb-4">
-                        <div class="card h-100 shadow-sm">
+                        <div class="card h-100 shadow-sm service-card">
                             <div class="card-body text-center">
                                 <i class="fas <?php echo htmlspecialchars($service['icon']); ?> fa-3x mb-3 text-primary"></i>
                                 <h5 class="card-title"><?php echo htmlspecialchars($service['title']); ?></h5>
                                 <p class="card-text"><?php echo htmlspecialchars($service['description']); ?></p>
+                                <?php if ($service['tech_icons']): ?>
+                                    <div class="tech-icons mt-3">
+                                        <?php
+                                        $icons = array_map('trim', explode(',', $service['tech_icons']));
+                                        foreach ($icons as $icon):
+                                            if ($icon):
+                                        ?>
+                                            <i class="<?php echo htmlspecialchars($icon); ?> tech-icon"></i>
+                                        <?php 
+                                            endif;
+                                        endforeach; 
+                                        ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

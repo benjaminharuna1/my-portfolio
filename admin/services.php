@@ -19,13 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $conn->real_escape_string($_POST['title']);
     $description = $conn->real_escape_string($_POST['description']);
     $icon = $conn->real_escape_string($_POST['icon']);
+    $tech_icons = $conn->real_escape_string($_POST['tech_icons']);
     
     if (isset($_POST['id']) && $_POST['id']) {
         $id = intval($_POST['id']);
-        $conn->query("UPDATE services SET title='$title', description='$description', icon='$icon' WHERE id=$id");
+        $conn->query("UPDATE services SET title='$title', description='$description', icon='$icon', tech_icons='$tech_icons' WHERE id=$id");
         $message = '<div class="alert alert-success">Service updated.</div>';
     } else {
-        $conn->query("INSERT INTO services (title, description, icon) VALUES ('$title', '$description', '$icon')");
+        $conn->query("INSERT INTO services (title, description, icon, tech_icons) VALUES ('$title', '$description', '$icon', '$tech_icons')");
         $message = '<div class="alert alert-success">Service added.</div>';
     }
 }
@@ -119,8 +120,14 @@ if (isset($_GET['edit'])) {
                                         <textarea class="form-control" id="description" name="description" rows="3" required><?php echo $edit_item ? htmlspecialchars($edit_item['description']) : ''; ?></textarea>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="icon" class="form-label">Font Awesome Icon (e.g., fa-palette)</label>
+                                        <label for="icon" class="form-label">Service Icon (Font Awesome)</label>
                                         <input type="text" class="form-control" id="icon" name="icon" value="<?php echo $edit_item ? htmlspecialchars($edit_item['icon']) : ''; ?>" placeholder="fa-palette">
+                                        <small class="text-muted">e.g., fa-palette, fa-code, fa-pencil-ruler</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tech_icons" class="form-label">Technology Icons (Comma Separated)</label>
+                                        <textarea class="form-control" id="tech_icons" name="tech_icons" rows="2" placeholder="fab fa-php, fab fa-js, fab fa-react, fab fa-laravel"><?php echo $edit_item ? htmlspecialchars($edit_item['tech_icons']) : ''; ?></textarea>
+                                        <small class="text-muted">Enter Font Awesome icon classes separated by commas. These appear after the description.</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary"><?php echo $edit_item ? 'Update' : 'Add'; ?></button>
                                     <?php if ($edit_item): ?>

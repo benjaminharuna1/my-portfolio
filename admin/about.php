@@ -1,5 +1,6 @@
 <?php
 require '../config.php';
+require '../includes/upload.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -17,8 +18,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = $conn->real_escape_string($_POST['phone']);
     $location = $conn->real_escape_string($_POST['location']);
     $image_url = $conn->real_escape_string($_POST['image_url']);
+    $image_filename = '';
     
-    $conn->query("UPDATE about SET title='$title', subtitle='$subtitle', description='$description', email='$email', phone='$phone', location='$location', image_url='$image_url' WHERE id=1");
+    // Handle image upload
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+        $upload = uploadImage($_FILES['image'], '../uploads');
+        if ($upload['success']) {
+            $image_filename = $upload['filename'];
+            $image_url = $upload['url'];
+        } else {
+            $message = '<div class="alert alert-danger">' . $upload['message'] . '</div>';
+        }
+    }
+    
+    if ($image_filename) {
+        $conn->query("UPDATE about SET title='$title', subtitle='$subtitle', description='$description', email='$email', phone='$phone', location='$location', image_url='$image_url', image_filename='$image_filename' WHERE id=1");
+    } else {
+        $conn->query("UPDATE about SET title='$title', subtitle='$subtitle', description='$description', email='$email', phone='$phone', location='$location', image_url='$image_url' WHERE id=1");
+    }
     $message = '<div class="alert alert-success">About section updated.</div>';
 }
 
@@ -94,7 +111,7 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
                                 <h5>Edit About Section</h5>
                             </div>
                             <div class="card-body">
-                                <form method="POST">
+                                <form method="POST" enctype="multipart/form-data">
                                     <div class="mb-3">
                                         <label for="title" class="form-label">Title</label>
                                         <input type="text" class="form-control" id="title" name="title" value="<?php echo htmlspecialchars($about['title']); ?>" required>
@@ -120,8 +137,19 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
                                         <input type="text" class="form-control" id="location" name="location" value="<?php echo htmlspecialchars($about['location']); ?>" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="image_url" class="form-label">Image URL</label>
-                                        <input type="url" class="form-control" id="image_url" name="image_url" value="<?php echo htmlspecialchars($about['image_url']); ?>">
+                                        <label for="image" class="form-label">Upload Image</label>
+                                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                        <small class="text-muted">Max 5MB. Formats: JPG, PNG, GIF, WebP</small>
+                                        <?php if ($about && $about['image_url']): ?>
+                                            <div class="mt-2">
+                                                <img src="<?php echo htmlspecialchars($about['image_url']); ?>" alt="Current" style="max-width: 150px; border-radius: 5px;">
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="image_url" class="form-label">Or Image URL</label>
+                                        <input type="url" class="form-control" id="image_url" name="image_url" value="<?php echo htmlspecialchars($about['image_url']); ?>" placeholder="https://...">
+                                        <small class="text-muted">Use this if not uploading a file</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Update</button>
                                 </form>

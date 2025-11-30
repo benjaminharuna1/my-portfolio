@@ -90,9 +90,9 @@ CREATE TABLE IF NOT EXISTS social_links (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user (password: Admin.123)
 INSERT INTO users (username, password, email) VALUES 
-('admin', '$2y$10$YIjlrDxR8.8Yd8Yd8Yd8eYIjlrDxR8.8Yd8Yd8Yd8eYIjlrDxR8.8', 'admin@portfolio.com');
+('admin', '$2y$10$a1ZlQ3AAVlETr2XWM9MrsOxhlOelw9Vxqg0Kcj08T7a9Rnr4MjHB.', 'admin@portfolio.com');
 
 -- Insert sample data
 INSERT INTO services (title, description, icon, tech_icons) VALUES 

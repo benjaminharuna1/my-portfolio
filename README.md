@@ -44,7 +44,7 @@ A pure PHP portfolio website with Bootstrap CSS and an admin dashboard for manag
    define('DB_USER', 'root');
    define('DB_PASS', 'your_password');
    define('DB_NAME', 'portfolio_db');
-   define('SITE_URL', 'http://localhost/portfolio');
+   define('SITE_URL', 'domain.com');
    ```
 
 ### 3. File Structure
@@ -82,15 +82,15 @@ portfolio/
 
 ### Frontend
 
-1. Navigate to `http://localhost/portfolio/`
+1. Navigate to `domain.com/portfolio/`
 2. Browse through Home, About, Portfolio, and Contact pages
 3. Submit contact form to send messages
 
 ### Admin Dashboard
 
-1. Login at `http://localhost/portfolio/login.php`
+1. Login at `domain.com/login.php`
    - Username: `admin`
-   - Password: `admin123`
+   - Password: `Admin.123`
 
 2. From the dashboard, you can:
    - Add/Edit/Delete portfolio items

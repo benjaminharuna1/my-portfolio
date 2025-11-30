@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `about` (
   `location` varchar(255) DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `about`
@@ -63,8 +63,10 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
   `message` text NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `is_read` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  KEY `is_read` (`is_read`),
+  KEY `created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -78,12 +80,14 @@ CREATE TABLE IF NOT EXISTS `portfolio_images` (
   `portfolio_id` int NOT NULL,
   `image_url` varchar(255) NOT NULL,
   `image_filename` varchar(255) DEFAULT NULL,
-  `alt_text` varchar(255) DEFAULT NULL,
-  `sort_order` int DEFAULT '0',
+  `alt_text` varchar(255) DEFAULT NULL COMMENT 'Accessibility alt text for the image',
+  `sort_order` int DEFAULT '0' COMMENT 'Order of images in gallery',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `portfolio_id` (`portfolio_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `portfolio_id` (`portfolio_id`),
+  KEY `sort_order` (`sort_order`),
+  CONSTRAINT `fk_portfolio_images_portfolio_id` FOREIGN KEY (`portfolio_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -96,7 +100,7 @@ CREATE TABLE IF NOT EXISTS `portfolio_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `title` varchar(200) NOT NULL,
   `description` text NOT NULL,
-  `body` longtext,
+  `body` longtext COMMENT 'Rich text content from QuillJS editor',
   `featured_image_url` varchar(255) DEFAULT NULL,
   `featured_image_filename` varchar(255) DEFAULT NULL,
   `category` varchar(100) DEFAULT NULL,
@@ -105,8 +109,11 @@ CREATE TABLE IF NOT EXISTS `portfolio_items` (
   `is_featured` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  KEY `status` (`status`),
+  KEY `is_featured` (`is_featured`),
+  KEY `category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -118,15 +125,17 @@ DROP TABLE IF EXISTS `portfolio_ratings`;
 CREATE TABLE IF NOT EXISTS `portfolio_ratings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `portfolio_id` int NOT NULL,
-  `rating` int NOT NULL,
+  `rating` int NOT NULL CHECK (`rating` >= 1 AND `rating` <= 5),
   `review_text` text,
   `reviewer_name` varchar(100) DEFAULT NULL,
   `reviewer_email` varchar(100) DEFAULT NULL,
   `is_approved` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `portfolio_id` (`portfolio_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `portfolio_id` (`portfolio_id`),
+  KEY `is_approved` (`is_approved`),
+  CONSTRAINT `fk_portfolio_ratings_portfolio_id` FOREIGN KEY (`portfolio_id`) REFERENCES `portfolio_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -144,8 +153,9 @@ CREATE TABLE IF NOT EXISTS `services` (
   `status` enum('draft','published') DEFAULT 'published',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `services`
@@ -170,7 +180,7 @@ CREATE TABLE IF NOT EXISTS `social_links` (
   `icon` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `social_links`
@@ -203,7 +213,7 @@ CREATE TABLE IF NOT EXISTS `testimonials` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `testimonials`
@@ -236,7 +246,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
@@ -262,7 +272,7 @@ CREATE TABLE IF NOT EXISTS `website_settings` (
   `website_description` text,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `website_settings`

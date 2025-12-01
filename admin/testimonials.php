@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $client_company = $conn->real_escape_string($_POST['client_company']);
     $testimonial_text = $conn->real_escape_string($_POST['testimonial_text']);
     $rating = intval($_POST['rating']);
+    $testimonial_date = !empty($_POST['testimonial_date']) ? $conn->real_escape_string($_POST['testimonial_date']) : NULL;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
     $is_active = isset($_POST['is_active']) ? 1 : 0;
     $client_image_url = $conn->real_escape_string($_POST['client_image_url']);
@@ -55,15 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     if (isset($_POST['id']) && $_POST['id']) {
         $id = intval($_POST['id']);
+        $date_part = $testimonial_date ? ", testimonial_date='$testimonial_date'" : ", testimonial_date=NULL";
         if ($client_image_filename) {
-            $conn->query("UPDATE testimonials SET client_name='$client_name', client_title='$client_title', client_company='$client_company', testimonial_text='$testimonial_text', rating=$rating, is_featured=$is_featured, is_active=$is_active, client_image_url='$client_image_url', client_image_filename='$client_image_filename' WHERE id=$id");
+            $conn->query("UPDATE testimonials SET client_name='$client_name', client_title='$client_title', client_company='$client_company', testimonial_text='$testimonial_text', rating=$rating$date_part, is_featured=$is_featured, is_active=$is_active, client_image_url='$client_image_url', client_image_filename='$client_image_filename' WHERE id=$id");
         } else {
-            $conn->query("UPDATE testimonials SET client_name='$client_name', client_title='$client_title', client_company='$client_company', testimonial_text='$testimonial_text', rating=$rating, is_featured=$is_featured, is_active=$is_active, client_image_url='$client_image_url' WHERE id=$id");
+            $conn->query("UPDATE testimonials SET client_name='$client_name', client_title='$client_title', client_company='$client_company', testimonial_text='$testimonial_text', rating=$rating$date_part, is_featured=$is_featured, is_active=$is_active, client_image_url='$client_image_url' WHERE id=$id");
         }
         $message = '<div class="alert alert-success">Testimonial updated successfully.</div>';
         ErrorLogger::log("Testimonial updated: ID $id", 'INFO');
     } else {
-        $conn->query("INSERT INTO testimonials (client_name, client_title, client_company, testimonial_text, rating, is_featured, is_active, client_image_url, client_image_filename) VALUES ('$client_name', '$client_title', '$client_company', '$testimonial_text', $rating, $is_featured, $is_active, '$client_image_url', '$client_image_filename')");
+        $date_part = $testimonial_date ? ", '$testimonial_date'" : ", NULL";
+        $conn->query("INSERT INTO testimonials (client_name, client_title, client_company, testimonial_text, rating, testimonial_date, is_featured, is_active, client_image_url, client_image_filename) VALUES ('$client_name', '$client_title', '$client_company', '$testimonial_text', $rating$date_part, $is_featured, $is_active, '$client_image_url', '$client_image_filename')");
         $message = '<div class="alert alert-success">Testimonial added successfully.</div>';
         ErrorLogger::log("Testimonial created: $client_name", 'INFO');
     }
@@ -192,6 +195,14 @@ $pagination = getPaginatedItems($conn, 'testimonials', $page, 10, 'id DESC');
                                             </select>
                                         </div>
                                         <div class="col-md-6 mb-3">
+                                            <label for="testimonial_date" class="form-label">Testimonial Date</label>
+                                            <input type="date" class="form-control" id="testimonial_date" name="testimonial_date" value="<?php echo $edit_item && !empty($edit_item['testimonial_date']) ? htmlspecialchars($edit_item['testimonial_date']) : ''; ?>">
+                                            <small class="text-muted">Date when the testimonial was given</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
                                             <label class="form-label">Status</label>
                                             <div>
                                                 <div class="form-check">

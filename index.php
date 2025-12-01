@@ -110,6 +110,87 @@ $page_title = 'Home';
         </div>
     </section>
 
+    <!-- Testimonials Section -->
+    <section class="testimonials-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">
+                <i class="fas fa-quote-left"></i> What Clients Say
+            </h2>
+            
+            <?php
+            $testimonials = $conn->query("SELECT * FROM portfolio_ratings WHERE is_approved = 1 ORDER BY created_at DESC LIMIT 6");
+            if ($testimonials->num_rows > 0):
+            ?>
+            <!-- Testimonials Carousel -->
+            <div id="testimonialsCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <?php
+                    $index = 0;
+                    while ($testimonial = $testimonials->fetch_assoc()):
+                        $active = $index === 0 ? 'active' : '';
+                    ?>
+                    <div class="carousel-item <?php echo $active; ?>">
+                        <div class="testimonial-card mx-auto">
+                            <div class="testimonial-header mb-3">
+                                <div class="rating-stars">
+                                    <?php for ($i = 0; $i < $testimonial['rating']; $i++): ?>
+                                        <i class="fas fa-star" style="color: #ffc107;"></i>
+                                    <?php endfor; ?>
+                                    <?php for ($i = $testimonial['rating']; $i < 5; $i++): ?>
+                                        <i class="far fa-star" style="color: #ddd;"></i>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            <p class="testimonial-text"><?php echo nl2br(htmlspecialchars($testimonial['review_text'])); ?></p>
+                            <div class="testimonial-footer mt-4 pt-3 border-top">
+                                <p class="mb-1">
+                                    <strong><?php echo htmlspecialchars($testimonial['reviewer_name']); ?></strong>
+                                </p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt"></i> <?php echo date('M d, Y', strtotime($testimonial['created_at'])); ?>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <?php 
+                        $index++;
+                    endwhile; 
+                    ?>
+                </div>
+
+                <!-- Carousel Controls -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#testimonialsCarousel" data-bs-slide="prev">
+                    <i class="fas fa-chevron-left"></i>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#testimonialsCarousel" data-bs-slide="next">
+                    <i class="fas fa-chevron-right"></i>
+                    <span class="visually-hidden">Next</span>
+                </button>
+
+                <!-- Carousel Indicators -->
+                <div class="carousel-indicators mt-4">
+                    <?php for ($i = 0; $i < $testimonials->num_rows; $i++): ?>
+                    <button type="button" data-bs-target="#testimonialsCarousel" data-bs-slide-to="<?php echo $i; ?>" <?php echo $i === 0 ? 'class="active"' : ''; ?> aria-label="Slide <?php echo $i + 1; ?>"></button>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <?php
+            else:
+            ?>
+            <div class="text-center py-5">
+                <p class="text-muted">No testimonials yet.</p>
+            </div>
+            <?php endif; ?>
+            
+            <div class="text-center mt-5">
+                <a href="<?php echo SITE_URL; ?>/reviews.php" class="btn btn-primary btn-lg">
+                    <i class="fas fa-star"></i> View All Reviews & Leave Your Own
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Call to Action Section -->
     <section class="cta-section py-5">
         <div class="container">

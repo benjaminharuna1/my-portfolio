@@ -340,6 +340,7 @@ CREATE TABLE IF NOT EXISTS `testimonials` (
   `client_image_filename` varchar(255) DEFAULT NULL,
   `testimonial_text` text NOT NULL,
   `rating` int DEFAULT '5',
+  `testimonial_date` date DEFAULT NULL COMMENT 'Date of the testimonial (manually set by admin)',
   `is_featured` tinyint(1) DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -351,10 +352,10 @@ CREATE TABLE IF NOT EXISTS `testimonials` (
 -- Dumping data for table `testimonials`
 --
 
-INSERT INTO `testimonials` (`id`, `client_name`, `client_title`, `client_company`, `client_image_url`, `client_image_filename`, `testimonial_text`, `rating`, `is_featured`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Sarah Johnson', 'Marketing Director', 'Tech Innovations Inc', NULL, NULL, 'Exceptional work! The website redesign exceeded our expectations. Highly professional and responsive to feedback.', 5, 1, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
-(2, 'Michael Chen', 'CEO', 'Digital Solutions Ltd', NULL, NULL, 'Outstanding developer. Delivered the project on time and with excellent attention to detail. Highly recommended!', 5, 1, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
-(3, 'Emma Williams', 'Product Manager', 'Creative Agency Co', NULL, NULL, 'Great communication and technical expertise. The final product was exactly what we envisioned.', 5, 0, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54');
+INSERT INTO `testimonials` (`id`, `client_name`, `client_title`, `client_company`, `client_image_url`, `client_image_filename`, `testimonial_text`, `rating`, `testimonial_date`, `is_featured`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Sarah Johnson', 'Marketing Director', 'Tech Innovations Inc', NULL, NULL, 'Exceptional work! The website redesign exceeded our expectations. Highly professional and responsive to feedback.', 5, '2025-11-20', 1, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(2, 'Michael Chen', 'CEO', 'Digital Solutions Ltd', NULL, NULL, 'Outstanding developer. Delivered the project on time and with excellent attention to detail. Highly recommended!', 5, '2025-11-18', 1, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54'),
+(3, 'Emma Williams', 'Product Manager', 'Creative Agency Co', NULL, NULL, 'Great communication and technical expertise. The final product was exactly what we envisioned.', 5, '2025-11-15', 0, 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54');
 
 -- --------------------------------------------------------
 
@@ -381,6 +382,36 @@ CREATE TABLE IF NOT EXISTS `website_settings` (
 
 INSERT INTO `website_settings` (`id`, `logo_url`, `logo_filename`, `favicon_url`, `favicon_filename`, `website_name`, `website_description`, `updated_at`) VALUES
 (1, NULL, NULL, NULL, NULL, 'My Portfolio', 'A professional portfolio website showcasing my work and skills', '2025-11-30 10:43:54');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `email_settings`
+--
+
+DROP TABLE IF EXISTS `email_settings`;
+CREATE TABLE IF NOT EXISTS `email_settings` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `smtp_host` varchar(255) DEFAULT NULL,
+  `smtp_port` int DEFAULT '587',
+  `smtp_username` varchar(255) DEFAULT NULL,
+  `smtp_password` varchar(255) DEFAULT NULL,
+  `from_email` varchar(255) DEFAULT NULL,
+  `from_name` varchar(255) DEFAULT 'Portfolio',
+  `admin_email` varchar(255) DEFAULT NULL,
+  `enable_notifications` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `email_settings`
+--
+
+INSERT INTO `email_settings` (`id`, `smtp_host`, `smtp_port`, `smtp_username`, `smtp_password`, `from_email`, `from_name`, `admin_email`, `enable_notifications`, `created_at`, `updated_at`) VALUES
+(1, '', 587, '', '', '', 'Portfolio', '', 1, '2025-11-30 10:43:54', '2025-11-30 10:43:54');
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

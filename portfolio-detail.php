@@ -116,15 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <i class="fas fa-external-link-alt"></i> View Project
                         </a>
                         <?php endif; ?>
-
-                        <div class="portfolio-meta">
-                            <?php if (!empty($portfolio['created_at'])): ?>
-                            <p><strong>Created:</strong> <?php echo date('M d, Y', strtotime($portfolio['created_at'])); ?></p>
-                            <?php endif; ?>
-                            <?php if (!empty($portfolio['updated_at'])): ?>
-                            <p><strong>Last Updated:</strong> <?php echo date('M d, Y', strtotime($portfolio['updated_at'])); ?></p>
-                            <?php endif; ?>
-                        </div>
                     </div>
                 </div>
             </div>

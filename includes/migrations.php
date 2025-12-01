@@ -16,6 +16,13 @@ class DatabaseMigrations {
      * Create email_settings table if it doesn't exist
      */
     private static function createEmailSettingsTable($conn) {
+        // Check if table already exists
+        $result = $conn->query("SHOW TABLES LIKE 'email_settings'");
+        if ($result && $result->num_rows > 0) {
+            // Table exists, no need to log
+            return true;
+        }
+        
         $sql = "CREATE TABLE IF NOT EXISTS email_settings (
             id INT PRIMARY KEY AUTO_INCREMENT,
             smtp_host VARCHAR(255),
@@ -28,10 +35,10 @@ class DatabaseMigrations {
             enable_notifications BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
         
         if ($conn->query($sql)) {
-            ErrorLogger::log("Email settings table created/verified", 'INFO');
+            ErrorLogger::log("Email settings table created", 'INFO');
             return true;
         } else {
             ErrorLogger::log("Failed to create email settings table: " . $conn->error, 'ERROR');

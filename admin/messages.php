@@ -99,6 +99,9 @@ $pagination = getPaginatedItems($conn, 'contact_messages', $page, 15, 'created_a
                                                 </td>
                                                 <td>
                                                     <div class="btn-group btn-group-sm" role="group">
+                                                        <button type="button" class="btn btn-primary" title="View Full Message" data-bs-toggle="modal" data-bs-target="#messageModal" onclick="viewMessage(<?php echo htmlspecialchars(json_encode($msg)); ?>)">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
                                                         <?php if (!$msg['is_read']): ?>
                                                             <a href="?mark_read=<?php echo $msg['id']; ?>" class="btn btn-info" title="Mark as Read">
                                                                 <i class="fas fa-check"></i>
@@ -127,3 +130,59 @@ $pagination = getPaginatedItems($conn, 'contact_messages', $page, 15, 'created_a
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+    <!-- Message View Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="messageModalLabel">Message Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>From:</strong></label>
+                        <p id="modalName" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Email:</strong></label>
+                        <p id="modalEmail" class="form-control-plaintext">
+                            <a id="modalEmailLink" href=""></a>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Date:</strong></label>
+                        <p id="modalDate" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Status:</strong></label>
+                        <p id="modalStatus" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Message:</strong></label>
+                        <div id="modalMessage" class="border p-3 rounded" style="background-color: #f9f9f9; min-height: 150px; white-space: pre-wrap; word-wrap: break-word;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a id="replyButton" href="" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-reply"></i> Reply via Email
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewMessage(message) {
+            // Populate modal with message data
+            document.getElementById('modalName').textContent = message.name;
+            document.getElementById('modalEmail').innerHTML = '<a href="mailto:' + message.email + '">' + message.email + '</a>';
+            document.getElementById('modalEmailLink').href = 'mailto:' + message.email;
+            document.getElementById('modalEmailLink').textContent = message.email;
+            document.getElementById('modalDate').textContent = new Date(message.created_at).toLocaleString();
+            document.getElementById('modalStatus').innerHTML = message.is_read ? '<span class="badge bg-success">Read</span>' : '<span class="badge bg-warning">Unread</span>';
+            document.getElementById('modalMessage').textContent = message.message;
+            document.getElementById('replyButton').href = 'mailto:' + message.email + '?subject=Re: Your Message';
+        }
+    </script>

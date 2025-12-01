@@ -7,6 +7,7 @@
 /**
  * Get a properly formatted image URL
  * Handles both uploaded images and external URLs
+ * Supports domain portability by converting relative paths to full URLs
  */
 function getImageUrl($image_url) {
     if (empty($image_url)) {
@@ -26,6 +27,12 @@ function getImageUrl($image_url) {
     // If it's just a filename, assume it's in uploads folder
     if (strpos($image_url, '/') === false) {
         return htmlspecialchars(SITE_URL . '/uploads/' . $image_url);
+    }
+    
+    // If it contains /uploads/ anywhere in the path, extract and rebuild
+    if (strpos($image_url, '/uploads/') !== false) {
+        $parts = explode('/uploads/', $image_url);
+        return htmlspecialchars(SITE_URL . '/uploads/' . end($parts));
     }
     
     // Default: prepend SITE_URL

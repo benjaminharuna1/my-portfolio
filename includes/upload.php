@@ -66,14 +66,14 @@ function uploadImage($file, $folder = null) {
         if (move_uploaded_file($filetmp, $filedestination)) {
             ErrorLogger::log("File uploaded successfully: $newfilename", 'INFO');
             
-            // Generate proper URL - use SITE_URL/uploads/filename
-            $url = SITE_URL . '/uploads/' . $newfilename;
+            // Store relative path instead of absolute URL for domain portability
+            $relative_path = '/uploads/' . $newfilename;
             
             return [
                 'success' => true,
                 'filename' => $newfilename,
                 'path' => $filedestination,
-                'url' => $url
+                'url' => $relative_path  // Store relative path, not absolute URL
             ];
         } else {
             throw new Exception("Failed to move uploaded file from $filetmp to $filedestination");

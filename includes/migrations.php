@@ -10,6 +10,7 @@ class DatabaseMigrations {
      */
     public static function runAll($conn) {
         self::createEmailSettingsTable($conn);
+        self::convertImageUrlsToRelativePaths($conn);
     }
     
     /**
@@ -44,6 +45,51 @@ class DatabaseMigrations {
             ErrorLogger::log("Failed to create email settings table: " . $conn->error, 'ERROR');
             return false;
         }
+    }
+
+    /**
+     * Convert absolute image URLs to relative paths for domain portability
+     * This allows images to work across different domains without re-uploading
+     */
+    private static function convertImageUrlsToRelativePaths($conn) {
+        // Check if migration has already been run
+        $check = $conn->query("SELECT COUNT(*) as count FROM portfolio_items WHERE featured_image_url LIKE 'http://%' OR featured_image_url LIKE 'https://%'");
+        $result = $check->fetch_assoc();
+        
+        if ($result['count'] == 0) {
+            // No absolute URLs found, migration already done or not needed
+            return true;
+        }
+
+        // Tables and columns to update
+        $updates = [
+            'portfolio_items' => ['featured_image_url'],
+            'portfolio_images' => ['image_url'],
+            'about' => ['image_url'],
+            'testimonials' => ['client_image_url'],
+            'website_settings' => ['logo_url', 'favicon_url']
+        ];
+
+        foreach ($updates as $table => $columns) {
+            foreach ($columns as $column) {
+                // Extract relative path from absolute URLs
+                $sql = "UPDATE `$table` 
+                        SET `$column` = SUBSTRING(`$column`, POSITION('/uploads/' IN `$column`))
+                        WHERE (`$column` LIKE 'http://%' OR `$column` LIKE 'https://%')
+                        AND `$column` LIKE '%/uploads/%'";
+                
+                if ($conn->query($sql)) {
+                    $affected = $conn->affected_rows;
+                    if ($affected > 0) {
+                        ErrorLogger::log("Converted $affected image URLs to relative paths in $table.$column", 'INFO');
+                    }
+                } else {
+                    ErrorLogger::log("Failed to convert URLs in $table.$column: " . $conn->error, 'WARNING');
+                }
+            }
+        }
+
+        return true;
     }
 }
 ?>

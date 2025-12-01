@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/image-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -175,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                         <?php if ($user && !empty($user['avatar_url'])): ?>
                                             <div class="mt-3 text-center">
                                                 <div class="avatar-container">
-                                                    <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Avatar" class="avatar-preview">
+                                                    <img src="<?php echo getImageUrl($user['avatar_url']); ?>" alt="Avatar" class="avatar-preview">
                                                 </div>
                                             </div>
                                         <?php endif; ?>
@@ -203,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <div class="card-body text-center">
                                 <?php if ($user && !empty($user['avatar_url'])): ?>
                                     <div class="avatar-container mb-3">
-                                        <img src="<?php echo htmlspecialchars($user['avatar_url']); ?>" alt="Profile" class="profile-avatar">
+                                        <img src="<?php echo getImageUrl($user['avatar_url']); ?>" alt="Profile" class="profile-avatar">
                                     </div>
                                 <?php else: ?>
                                     <div class="avatar-container mb-3">

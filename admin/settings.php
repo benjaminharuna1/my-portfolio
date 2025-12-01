@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/image-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -165,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                         <?php if ($settings && !empty($settings['logo_url'])): ?>
                                             <div class="mt-2">
                                                 <strong>Current Logo:</strong>
-                                                <img src="<?php echo htmlspecialchars($settings['logo_url']); ?>" alt="Logo" class="logo-preview">
+                                                <img src="<?php echo getImageUrl($settings['logo_url']); ?>" alt="Logo" class="logo-preview">
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -190,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                         <?php if ($settings && !empty($settings['favicon_url'])): ?>
                                             <div class="mt-2">
                                                 <strong>Current Favicon:</strong>
-                                                <img src="<?php echo htmlspecialchars($settings['favicon_url']); ?>" alt="Favicon" class="favicon-preview">
+                                                <img src="<?php echo getImageUrl($settings['favicon_url']); ?>" alt="Favicon" class="favicon-preview">
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -289,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                 <div class="mb-4">
                                     <strong>Logo Preview:</strong>
                                     <?php if ($settings && !empty($settings['logo_url'])): ?>
-                                        <img src="<?php echo htmlspecialchars($settings['logo_url']); ?>" alt="Logo" class="img-fluid mt-2" style="max-width: 150px;">
+                                        <img src="<?php echo getImageUrl($settings['logo_url']); ?>" alt="Logo" class="img-fluid mt-2" style="max-width: 150px;">
                                     <?php else: ?>
                                         <p class="text-muted mt-2">No logo uploaded</p>
                                     <?php endif; ?>
@@ -298,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                 <div class="mb-4">
                                     <strong>Favicon Preview:</strong>
                                     <?php if ($settings && !empty($settings['favicon_url'])): ?>
-                                        <img src="<?php echo htmlspecialchars($settings['favicon_url']); ?>" alt="Favicon" class="mt-2" style="width: 64px; height: 64px;">
+                                        <img src="<?php echo getImageUrl($settings['favicon_url']); ?>" alt="Favicon" class="mt-2" style="width: 64px; height: 64px;">
                                     <?php else: ?>
                                         <p class="text-muted mt-2">No favicon uploaded</p>
                                     <?php endif; ?>

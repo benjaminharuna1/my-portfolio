@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/image-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');
@@ -105,7 +106,7 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
                                         <small class="text-muted">Max 5MB. Formats: JPG, PNG, GIF, WebP</small>
                                         <?php if ($about && !empty($about['image_url'])): ?>
                                             <div class="mt-2">
-                                                <img src="<?php echo htmlspecialchars($about['image_url']); ?>" alt="Current" style="max-width: 150px; border-radius: 5px;">
+                                                <img src="<?php echo getImageUrl($about['image_url']); ?>" alt="Current" style="max-width: 150px; border-radius: 5px;">
                                             </div>
                                         <?php endif; ?>
                                     </div>

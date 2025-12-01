@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/image-helper.php';
 require '../includes/admin-list-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -223,7 +224,7 @@ $pagination = getPaginatedItems($conn, 'testimonials', $page, 10, 'id DESC');
                                         <small class="text-muted">Max 5MB. Recommended: 300x300px</small>
                                         <?php if ($edit_item && !empty($edit_item['client_image_url'])): ?>
                                             <div class="mt-2">
-                                                <img src="<?php echo htmlspecialchars($edit_item['client_image_url']); ?>" alt="Client" class="client-image-preview">
+                                                <img src="<?php echo getImageUrl($edit_item['client_image_url']); ?>" alt="Client" class="client-image-preview">
                                             </div>
                                         <?php endif; ?>
                                     </div>

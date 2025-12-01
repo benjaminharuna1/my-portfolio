@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/image-helper.php';
 require '../includes/admin-list-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -265,7 +266,7 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                         <small class="text-muted">Max 5MB. Recommended: 600x400px</small>
                                         <?php if ($edit_item && !empty($edit_item['featured_image_url'])): ?>
                                             <div class="mt-2">
-                                                <img src="<?php echo htmlspecialchars($edit_item['featured_image_url']); ?>" alt="Featured" class="portfolio-image-preview">
+                                                <img src="<?php echo getImageUrl($edit_item['featured_image_url']); ?>" alt="Featured" class="portfolio-image-preview">
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -347,7 +348,7 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                     <?php if (!empty($img['image_url'])): ?>
                                     <div class="image-item" draggable="true" data-image-id="<?php echo $img['id']; ?>">
                                         <div class="image-item-inner">
-                                            <img src="<?php echo htmlspecialchars($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
+                                            <img src="<?php echo getImageUrl($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
                                             <div class="image-item-overlay">
                                                 <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
                                                 <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>

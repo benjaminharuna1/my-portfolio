@@ -273,7 +273,7 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
 
                                     <div class="mb-3">
                                         <label for="featured_image_url" class="form-label">Or Featured Image URL</label>
-                                        <input type="url" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item && !empty($edit_item['featured_image_url']) ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
+                                        <input type="text" class="form-control" id="featured_image_url" name="featured_image_url" value="<?php echo $edit_item && !empty($edit_item['featured_image_url']) ? htmlspecialchars($edit_item['featured_image_url']) : ''; ?>" placeholder="https://...">
                                     </div>
 
                                     <div class="row">

@@ -231,7 +231,7 @@ $pagination = getPaginatedItems($conn, 'testimonials', $page, 10, 'id DESC');
 
                                     <div class="mb-3">
                                         <label for="client_image_url" class="form-label">Or Image URL</label>
-                                        <input type="url" class="form-control" id="client_image_url" name="client_image_url" value="<?php echo $edit_item && !empty($edit_item['client_image_url']) ? htmlspecialchars($edit_item['client_image_url']) : ''; ?>" placeholder="https://...">
+                                        <input type="text" class="form-control" id="client_image_url" name="client_image_url" value="<?php echo $edit_item && !empty($edit_item['client_image_url']) ? htmlspecialchars($edit_item['client_image_url']) : ''; ?>" placeholder="https://...">
                                     </div>
 
                                     <div class="btn-group" role="group">

@@ -112,7 +112,7 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
                                     </div>
                                     <div class="mb-3">
                                         <label for="image_url" class="form-label">Or Image URL</label>
-                                        <input type="url" class="form-control" id="image_url" name="image_url" value="<?php echo htmlspecialchars($about['image_url']); ?>" placeholder="https://...">
+                                        <input type="text" class="form-control" id="image_url" name="image_url" value="<?php echo htmlspecialchars($about['image_url']); ?>" placeholder="https://...">
                                         <small class="text-muted">Use this if not uploading a file</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Update</button>

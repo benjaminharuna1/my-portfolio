@@ -76,6 +76,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
 
+            <!-- Custom Icons -->
+            <li class="nav-item">
+                <a class="nav-link <?php echo $current_page === 'icons.php' ? 'active' : ''; ?>" 
+                   href="<?php echo SITE_URL; ?>/admin/icons.php">
+                    <i class="fas fa-icons"></i> Custom Icons
+                </a>
+            </li>
+
             <!-- Divider -->
             <li class="nav-item mt-3 mb-3">
                 <hr class="bg-secondary">

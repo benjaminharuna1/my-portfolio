@@ -11,6 +11,7 @@ class DatabaseMigrations {
     public static function runAll($conn) {
         self::createEmailSettingsTable($conn);
         self::convertImageUrlsToRelativePaths($conn);
+        self::createCustomIconsTable($conn);
     }
     
     /**
@@ -90,6 +91,41 @@ class DatabaseMigrations {
         }
 
         return true;
+    }
+
+    /**
+     * Create custom_icons table for SVG icon management
+     */
+    private static function createCustomIconsTable($conn) {
+        // Check if table already exists
+        $result = $conn->query("SHOW TABLES LIKE 'custom_icons'");
+        if ($result && $result->num_rows > 0) {
+            // Table exists, no need to log
+            return true;
+        }
+
+        $sql = "CREATE TABLE IF NOT EXISTS custom_icons (
+            id INT NOT NULL AUTO_INCREMENT,
+            name VARCHAR(100) NOT NULL UNIQUE,
+            slug VARCHAR(100) NOT NULL UNIQUE,
+            svg_content LONGTEXT NOT NULL,
+            svg_filename VARCHAR(255),
+            category VARCHAR(100),
+            color VARCHAR(7) DEFAULT '#000000',
+            size VARCHAR(20) DEFAULT '24',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY category (category)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
+
+        if ($conn->query($sql)) {
+            ErrorLogger::log("Custom icons table created", 'INFO');
+            return true;
+        } else {
+            ErrorLogger::log("Failed to create custom icons table: " . $conn->error, 'ERROR');
+            return false;
+        }
     }
 }
 ?>

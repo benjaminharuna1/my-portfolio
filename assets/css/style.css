@@ -203,6 +203,20 @@ p {
     transform: scale(1.2) translateY(-3px);
 }
 
+/* Tech Icon SVG - Custom SVG icons */
+.tech-icon-svg {
+    width: 1.3em;
+    height: 1.3em;
+    display: inline-block;
+    vertical-align: middle;
+    fill: var(--secondary-color);
+    transition: all 0.3s ease;
+}
+
+.tech-icon:hover .tech-icon-svg {
+    fill: var(--primary-color);
+}
+
 /* Portfolio Section */
 .portfolio-section {
     padding: 80px 0;
@@ -967,6 +981,11 @@ footer .social-links a:hover {
 
     .tech-icon {
         font-size: 1.1rem;
+    }
+
+    .tech-icon-svg {
+        width: 1.1em;
+        height: 1.1em;
     }
 
     .button-group {

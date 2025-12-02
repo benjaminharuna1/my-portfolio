@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
 require 'includes/image-helper.php';
+require 'includes/icon-helper.php';
 $page_title = 'Portfolio';
 $category = isset($_GET['category']) ? $_GET['category'] : '';
 
@@ -21,9 +22,16 @@ if ($category) {
             <!-- Filter Buttons -->
             <div class="text-center mb-5">
                 <a href="<?php echo SITE_URL; ?>/portfolio.php" class="btn btn-outline-primary me-2">All</a>
-                <a href="<?php echo SITE_URL; ?>/portfolio.php?category=Web Design" class="btn btn-outline-primary me-2">Web Design</a>
-                <a href="<?php echo SITE_URL; ?>/portfolio.php?category=Web Development" class="btn btn-outline-primary me-2">Web Development</a>
-                <a href="<?php echo SITE_URL; ?>/portfolio.php?category=UI/UX" class="btn btn-outline-primary">UI/UX</a>
+                <?php
+                $categories = $conn->query("SELECT DISTINCT category FROM portfolio_items WHERE status = 'published' ORDER BY category");
+                while ($cat = $categories->fetch_assoc()):
+                    $cat_name = htmlspecialchars($cat['category']);
+                ?>
+                <a href="<?php echo SITE_URL; ?>/portfolio.php?category=<?php echo urlencode($cat['category']); ?>" class="btn btn-outline-primary me-2">
+                    <?php echo icon($cat['category'], '', 'fa-folder'); ?>
+                    <?php echo $cat_name; ?>
+                </a>
+                <?php endwhile; ?>
             </div>
 
             <!-- Portfolio Grid -->

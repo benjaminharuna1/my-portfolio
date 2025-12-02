@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
 require 'includes/image-helper.php';
+require 'includes/icon-helper.php';
 $page_title = 'Home';
 ?>
 <?php include 'includes/header.php'; ?>
@@ -57,17 +58,21 @@ $page_title = 'Home';
                     <div class="col-md-4 mb-4">
                         <div class="card h-100 shadow-sm service-card">
                             <div class="card-body text-center">
-                                <i class="fas <?php echo htmlspecialchars($service['icon']); ?> fa-3x mb-3 text-primary"></i>
+                                <div class="service-icon mb-3" style="font-size: 3rem; color: #667eea;">
+                                    <?php echo icon($service['icon'], 'text-primary', 'fa-' . strtolower(str_replace(' ', '-', $service['title']))); ?>
+                                </div>
                                 <h5 class="card-title"><?php echo htmlspecialchars($service['title']); ?></h5>
                                 <p class="card-text"><?php echo htmlspecialchars($service['description']); ?></p>
                                 <?php if ($service['tech_icons']): ?>
                                     <div class="tech-icons mt-3">
                                         <?php
                                         $icons = array_map('trim', explode(',', $service['tech_icons']));
-                                        foreach ($icons as $icon):
-                                            if ($icon):
+                                        foreach ($icons as $icon_name):
+                                            if ($icon_name):
                                         ?>
-                                            <i class="<?php echo htmlspecialchars($icon); ?> tech-icon"></i>
+                                            <span class="tech-icon" style="display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                                <?php echo icon($icon_name, 'tech-icon-svg'); ?>
+                                            </span>
                                         <?php 
                                             endif;
                                         endforeach; 

@@ -113,6 +113,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
 
+            <!-- Test Email -->
+            <li class="nav-item">
+                <a class="nav-link <?php echo $current_page === 'test-email.php' ? 'active' : ''; ?>" 
+                   href="<?php echo SITE_URL; ?>/admin/test-email.php">
+                    <i class="fas fa-envelope"></i> Test Email
+                </a>
+            </li>
+
             <!-- Divider -->
             <li class="nav-item mt-3 mb-3">
                 <hr class="bg-secondary">

@@ -1,6 +1,7 @@
 <?php
 require '../config.php';
 require '../includes/upload.php';
+require '../includes/svg-upload.php';
 require '../includes/admin-list-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -32,10 +33,8 @@ if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $icon = $conn->query("SELECT svg_filename FROM custom_icons WHERE id = $id")->fetch_assoc();
     if ($icon && !empty($icon['svg_filename'])) {
-        $file_path = '../uploads/' . $icon['svg_filename'];
-        if (file_exists($file_path)) {
-            unlink($file_path);
-        }
+        // Use SVG uploader to delete file
+        $svg_uploader->delete($icon['svg_filename']);
     }
     $conn->query("DELETE FROM custom_icons WHERE id = $id");
     $message = '<div class="alert alert-success">Icon deleted successfully.</div>';
@@ -54,74 +53,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     // Handle SVG file upload
     if (isset($_FILES['svg_file']) && $_FILES['svg_file']['error'] === 0) {
-        $file = $_FILES['svg_file'];
-        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        // Use SVG uploader
+        $upload_result = $svg_uploader->upload($_FILES['svg_file']);
         
-        // Validate SVG file - check extension and MIME type
-        if ($file_ext !== 'svg') {
-            $message = '<div class="alert alert-danger">Please upload a valid SVG file (.svg extension required).</div>';
+        if (!$upload_result['success']) {
+            $message = '<div class="alert alert-danger">SVG Upload Failed: ' . htmlspecialchars($upload_result['message']) . '</div>';
+            ErrorLogger::log("SVG upload failed: " . $upload_result['error_code'] . " - " . $upload_result['message'], 'ERROR');
         } else {
-            // Read SVG content
-            $svg_content = file_get_contents($file['tmp_name']);
+            $svg_content = $upload_result['svg_content'];
+            $svg_filename = $upload_result['filename'];
+            $svg_content_escaped = $conn->real_escape_string($svg_content);
             
-            if ($svg_content === false) {
-                $message = '<div class="alert alert-danger">Failed to read SVG file.</div>';
-            } else {
-                // Ensure UTF-8 encoding
-                if (!mb_check_encoding($svg_content, 'UTF-8')) {
-                    $svg_content = mb_convert_encoding($svg_content, 'UTF-8');
+            // Delete old file if editing
+            if (isset($_POST['id']) && $_POST['id']) {
+                $old_icon = $conn->query("SELECT svg_filename FROM custom_icons WHERE id = " . intval($_POST['id']))->fetch_assoc();
+                if ($old_icon && !empty($old_icon['svg_filename'])) {
+                    $svg_uploader->delete($old_icon['svg_filename']);
                 }
-                
-                // Sanitize SVG (remove script tags and dangerous attributes)
-                $svg_content = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $svg_content);
-                $svg_content = preg_replace('/on\w+\s*=\s*["\'][^"\']*["\']/i', '', $svg_content);
-                
-                // Escape for database storage
-                $svg_content_escaped = $conn->real_escape_string($svg_content);
-                
-                // Generate filename
-                $svg_filename = 'icon_' . uniqid() . '.svg';
-                $upload_path = '../uploads/' . $svg_filename;
-                
-                // Ensure uploads directory exists
-                if (!is_dir('../uploads')) {
-                    mkdir('../uploads', 0755, true);
-                }
-                
-                // Delete old file if editing
-                if (isset($_POST['id']) && $_POST['id']) {
-                    $old_icon = $conn->query("SELECT svg_filename FROM custom_icons WHERE id = " . intval($_POST['id']))->fetch_assoc();
-                    if ($old_icon && !empty($old_icon['svg_filename'])) {
-                        $old_path = '../uploads/' . $old_icon['svg_filename'];
-                        if (file_exists($old_path)) {
-                            unlink($old_path);
-                        }
-                    }
-                }
-                
-                // Save SVG file
-                if (file_put_contents($upload_path, $svg_content) !== false) {
-                    if (isset($_POST['id']) && $_POST['id']) {
-                        $id = intval($_POST['id']);
-                        if ($conn->query("UPDATE custom_icons SET name='$name', slug='$slug', category='$category', color='$color', size='$size', svg_content='$svg_content_escaped', svg_filename='$svg_filename' WHERE id=$id")) {
-                            $message = '<div class="alert alert-success">Icon updated successfully.</div>';
-                            ErrorLogger::log("Icon updated: ID $id", 'INFO');
-                        } else {
-                            $message = '<div class="alert alert-danger">Failed to update icon in database: ' . $conn->error . '</div>';
-                            ErrorLogger::log("Icon update failed: " . $conn->error, 'ERROR');
-                        }
-                    } else {
-                        if ($conn->query("INSERT INTO custom_icons (name, slug, category, color, size, svg_content, svg_filename) VALUES ('$name', '$slug', '$category', '$color', '$size', '$svg_content_escaped', '$svg_filename')")) {
-                            $message = '<div class="alert alert-success">Icon added successfully.</div>';
-                            ErrorLogger::log("Icon created: $name", 'INFO');
-                        } else {
-                            $message = '<div class="alert alert-danger">Failed to save icon to database: ' . $conn->error . '</div>';
-                            ErrorLogger::log("Icon creation failed: " . $conn->error, 'ERROR');
-                        }
-                    }
+            }
+            
+            // Save to database
+            if (isset($_POST['id']) && $_POST['id']) {
+                $id = intval($_POST['id']);
+                $update_query = "UPDATE custom_icons SET name='$name', slug='$slug', category='$category', color='$color', size='$size', svg_content='$svg_content_escaped', svg_filename='$svg_filename' WHERE id=$id";
+                if ($conn->query($update_query)) {
+                    $message = '<div class="alert alert-success">Icon updated successfully.</div>';
+                    ErrorLogger::log("Icon updated: ID $id, SVG file: $svg_filename, Content length: " . $upload_result['content_length'], 'INFO');
                 } else {
-                    $message = '<div class="alert alert-danger">Failed to save SVG file to disk. Check directory permissions.</div>';
-                    ErrorLogger::log("Failed to save SVG file: $upload_path", 'ERROR');
+                    $message = '<div class="alert alert-danger">Failed to update icon in database: ' . $conn->error . '</div>';
+                    ErrorLogger::log("Icon update failed: " . $conn->error, 'ERROR');
+                }
+            } else {
+                $insert_query = "INSERT INTO custom_icons (name, slug, category, color, size, svg_content, svg_filename) VALUES ('$name', '$slug', '$category', '$color', '$size', '$svg_content_escaped', '$svg_filename')";
+                if ($conn->query($insert_query)) {
+                    $message = '<div class="alert alert-success">Icon added successfully.</div>';
+                    ErrorLogger::log("Icon created: $name, SVG file: $svg_filename, Content length: " . $upload_result['content_length'], 'INFO');
+                } else {
+                    $message = '<div class="alert alert-danger">Failed to save icon to database: ' . $conn->error . '</div>';
+                    ErrorLogger::log("Icon creation failed: " . $conn->error, 'ERROR');
                 }
             }
         }

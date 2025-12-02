@@ -84,6 +84,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
 
+            <!-- Verify SVG Content -->
+            <li class="nav-item">
+                <a class="nav-link <?php echo $current_page === 'verify-svg-content.php' ? 'active' : ''; ?>" 
+                   href="<?php echo SITE_URL; ?>/admin/verify-svg-content.php">
+                    <i class="fas fa-check-circle"></i> Verify SVG Content
+                </a>
+            </li>
+
             <!-- Divider -->
             <li class="nav-item mt-3 mb-3">
                 <hr class="bg-secondary">

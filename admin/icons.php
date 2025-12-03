@@ -180,6 +180,9 @@ $pagination = getPaginatedItems($conn, 'custom_icons', $page, 12, 'id DESC');
                                         <?php endif; ?>
                                     </div>
                                     <div class="icon-card-name"><?php echo htmlspecialchars($icon['name']); ?></div>
+                                    <div class="icon-card-shortname" style="font-size: 0.75rem; color: #999; font-family: monospace; margin-bottom: 5px; word-break: break-all;">
+                                        ci-<?php echo htmlspecialchars($icon['slug']); ?>
+                                    </div>
                                     <?php if (!empty($icon['category'])): ?>
                                         <div class="icon-card-category"><?php echo htmlspecialchars($icon['category']); ?></div>
                                     <?php endif; ?>

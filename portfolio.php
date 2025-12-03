@@ -7,9 +7,9 @@ $category = isset($_GET['category']) ? $_GET['category'] : '';
 
 if ($category) {
     $category = $conn->real_escape_string($category);
-    $result = $conn->query("SELECT pi.* FROM portfolio_items pi JOIN categories c ON pi.category_id = c.id WHERE c.slug = '$category' AND pi.status = 'published'");
+    $result = $conn->query("SELECT pi.* FROM portfolio_items pi JOIN categories c ON pi.category_id = c.id WHERE c.slug = '$category' AND pi.status = 'published' ORDER BY pi.id DESC");
 } else {
-    $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published'");
+    $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published' ORDER BY id DESC");
 }
 ?>
 <?php include 'includes/header.php'; ?>

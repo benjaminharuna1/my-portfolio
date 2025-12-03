@@ -52,7 +52,7 @@ $page_title = 'Home';
             <h2 class="text-center mb-5">Services</h2>
             <div class="row">
                 <?php
-                $result = $conn->query("SELECT * FROM services");
+                $result = $conn->query("SELECT * FROM services WHERE status = 'published' ORDER BY id DESC");
                 while ($service = $result->fetch_assoc()):
                 ?>
                     <div class="col-md-4 mb-4">
@@ -93,7 +93,7 @@ $page_title = 'Home';
             <h2 class="text-center mb-5">Featured Work</h2>
             <div class="row">
                 <?php
-                $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published' LIMIT 3");
+                $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published' ORDER BY id DESC LIMIT 3");
                 while ($item = $result->fetch_assoc()):
                     $image_url = getImageWithFallback($item['featured_image_url'], $item['title'], 400, 300);
                 ?>

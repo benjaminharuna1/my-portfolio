@@ -11,6 +11,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $page_title = 'Manage Icons';
 $message = '';
+$form_data = [];
+$form_errors = [];
 
 // Create icons table if it doesn't exist
 $conn->query("CREATE TABLE IF NOT EXISTS `custom_icons` (
@@ -32,82 +34,125 @@ $conn->query("CREATE TABLE IF NOT EXISTS `custom_icons` (
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $icon = $conn->query("SELECT svg_filename FROM custom_icons WHERE id = $id")->fetch_assoc();
-    if ($icon && !empty($icon['svg_filename'])) {
-        // Use SVG uploader to delete file
-        $svg_uploader->delete($icon['svg_filename']);
+    if ($icon) {
+        if (!empty($icon['svg_filename'])) {
+            // Use SVG uploader to delete file
+            $svg_uploader->delete($icon['svg_filename']);
+        }
+        if ($conn->query("DELETE FROM custom_icons WHERE id = $id")) {
+            $message = '<div class="alert alert-success">Icon deleted successfully.</div>';
+            ErrorLogger::log("Icon deleted: ID $id", 'INFO');
+        } else {
+            $message = '<div class="alert alert-danger">Failed to delete icon: ' . $conn->error . '</div>';
+            ErrorLogger::log("Icon delete failed: " . $conn->error, 'ERROR');
+        }
+    } else {
+        $message = '<div class="alert alert-warning">Icon not found.</div>';
     }
-    $conn->query("DELETE FROM custom_icons WHERE id = $id");
-    $message = '<div class="alert alert-success">Icon deleted successfully.</div>';
-    ErrorLogger::log("Icon deleted: ID $id", 'INFO');
 }
 
 // Add/Edit icon
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save') {
-    $name = $conn->real_escape_string($_POST['name']);
-    $slug = strtolower(preg_replace('/[^a-z0-9]+/', '-', trim($_POST['name'])));
-    $category = $conn->real_escape_string($_POST['category']);
-    $color = $conn->real_escape_string($_POST['color']);
-    $size = $conn->real_escape_string($_POST['size']);
-    $svg_content = '';
-    $svg_filename = '';
+    // Sanitize and validate inputs
+    $name = trim($_POST['name'] ?? '');
+    $name = $conn->real_escape_string($name);
+    
+    // Generate slug from the trimmed name
+    $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name));
+    $slug = trim($slug, '-');
+    
+    // Preserve form data for error display
+    $form_data = [
+        'id' => isset($_POST['id']) ? intval($_POST['id']) : '',
+        'name' => $name,
+        'slug' => $slug,
+        'category' => $_POST['category'] ?? '',
+        'color' => $_POST['color'] ?? '#000000',
+        'size' => $_POST['size'] ?? '24'
+    ];
+    
+    // Validate name is not empty
+    if (empty($name) || empty($slug)) {
+        $form_errors[] = 'Icon name is required and must contain at least one alphanumeric character.';
+    }
+    
+    if (empty($form_errors)) {
+        $category = $conn->real_escape_string($_POST['category'] ?? '');
+        $color = $conn->real_escape_string($_POST['color'] ?? '#000000');
+        $size = $conn->real_escape_string($_POST['size'] ?? '24');
+        $svg_content = '';
+        $svg_filename = '';
 
-    // Handle SVG file upload
-    if (isset($_FILES['svg_file']) && $_FILES['svg_file']['error'] === 0) {
-        // Use SVG uploader
-        $upload_result = $svg_uploader->upload($_FILES['svg_file']);
-        
-        if (!$upload_result['success']) {
-            $message = '<div class="alert alert-danger">SVG Upload Failed: ' . htmlspecialchars($upload_result['message']) . '</div>';
-            ErrorLogger::log("SVG upload failed: " . $upload_result['error_code'] . " - " . $upload_result['message'], 'ERROR');
-        } else {
-            $svg_content = $upload_result['svg_content'];
-            $svg_filename = $upload_result['filename'];
-            $svg_content_escaped = $conn->real_escape_string($svg_content);
+        // Handle SVG file upload
+        if (isset($_FILES['svg_file']) && $_FILES['svg_file']['error'] === 0) {
+            // Use SVG uploader
+            $upload_result = $svg_uploader->upload($_FILES['svg_file']);
             
-            // Delete old file if editing
-            if (isset($_POST['id']) && $_POST['id']) {
-                $old_icon = $conn->query("SELECT svg_filename FROM custom_icons WHERE id = " . intval($_POST['id']))->fetch_assoc();
-                if ($old_icon && !empty($old_icon['svg_filename'])) {
-                    $svg_uploader->delete($old_icon['svg_filename']);
-                }
-            }
-            
-            // Save to database
-            if (isset($_POST['id']) && $_POST['id']) {
-                $id = intval($_POST['id']);
-                $update_query = "UPDATE custom_icons SET name='$name', slug='$slug', category='$category', color='$color', size='$size', svg_content='$svg_content_escaped', svg_filename='$svg_filename' WHERE id=$id";
-                if ($conn->query($update_query)) {
-                    $message = '<div class="alert alert-success">Icon updated successfully.</div>';
-                    ErrorLogger::log("Icon updated: ID $id, SVG file: $svg_filename, Content length: " . $upload_result['content_length'], 'INFO');
-                } else {
-                    $message = '<div class="alert alert-danger">Failed to update icon in database: ' . $conn->error . '</div>';
-                    ErrorLogger::log("Icon update failed: " . $conn->error, 'ERROR');
-                }
+            if (!$upload_result['success']) {
+                $message = '<div class="alert alert-danger">SVG Upload Failed: ' . htmlspecialchars($upload_result['message']) . '</div>';
+                ErrorLogger::log("SVG upload failed: " . $upload_result['error_code'] . " - " . $upload_result['message'], 'ERROR');
             } else {
-                $insert_query = "INSERT INTO custom_icons (name, slug, category, color, size, svg_content, svg_filename) VALUES ('$name', '$slug', '$category', '$color', '$size', '$svg_content_escaped', '$svg_filename')";
-                if ($conn->query($insert_query)) {
-                    $message = '<div class="alert alert-success">Icon added successfully.</div>';
-                    ErrorLogger::log("Icon created: $name, SVG file: $svg_filename, Content length: " . $upload_result['content_length'], 'INFO');
+                $svg_content = $upload_result['svg_content'];
+                $svg_filename = $upload_result['filename'];
+                $svg_content_escaped = $conn->real_escape_string($svg_content);
+                
+                // Delete old file if editing
+                if (isset($_POST['id']) && $_POST['id']) {
+                    $old_icon = $conn->query("SELECT svg_filename FROM custom_icons WHERE id = " . intval($_POST['id']))->fetch_assoc();
+                    if ($old_icon && !empty($old_icon['svg_filename'])) {
+                        $svg_uploader->delete($old_icon['svg_filename']);
+                    }
+                }
+                
+                // Save to database
+                if (isset($_POST['id']) && $_POST['id']) {
+                    $id = intval($_POST['id']);
+                    $update_query = "UPDATE custom_icons SET name='$name', slug='$slug', category='$category', color='$color', size='$size', svg_content='$svg_content_escaped', svg_filename='$svg_filename' WHERE id=$id";
+                    if ($conn->query($update_query)) {
+                        $message = '<div class="alert alert-success">Icon updated successfully.</div>';
+                        ErrorLogger::log("Icon updated: ID $id, SVG file: $svg_filename, Content length: " . $upload_result['content_length'], 'INFO');
+                        $form_data = [];
+                    } else {
+                        $form_errors[] = 'Database error: ' . $conn->error;
+                        ErrorLogger::log("Icon update failed: " . $conn->error, 'ERROR');
+                    }
                 } else {
-                    $message = '<div class="alert alert-danger">Failed to save icon to database: ' . $conn->error . '</div>';
-                    ErrorLogger::log("Icon creation failed: " . $conn->error, 'ERROR');
+                    $insert_query = "INSERT INTO custom_icons (name, slug, category, color, size, svg_content, svg_filename) VALUES ('$name', '$slug', '$category', '$color', '$size', '$svg_content_escaped', '$svg_filename')";
+                    if ($conn->query($insert_query)) {
+                        $message = '<div class="alert alert-success">Icon added successfully.</div>';
+                        ErrorLogger::log("Icon created: $name, SVG file: $svg_filename, Content length: " . $upload_result['content_length'], 'INFO');
+                        $form_data = [];
+                    } else {
+                        $form_errors[] = 'Database error: ' . $conn->error;
+                        ErrorLogger::log("Icon creation failed: " . $conn->error, 'ERROR');
+                    }
                 }
             }
+        } elseif (isset($_POST['id']) && $_POST['id']) {
+            // Update without changing SVG file
+            $id = intval($_POST['id']);
+            if ($conn->query("UPDATE custom_icons SET name='$name', slug='$slug', category='$category', color='$color', size='$size' WHERE id=$id")) {
+                $message = '<div class="alert alert-success">Icon updated successfully.</div>';
+                ErrorLogger::log("Icon updated: ID $id", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+                ErrorLogger::log("Icon update failed: " . $conn->error, 'ERROR');
+            }
+        } else {
+            $form_errors[] = 'Please upload an SVG file.';
         }
-    } elseif (isset($_POST['id']) && $_POST['id']) {
-        // Update without changing SVG file
-        $id = intval($_POST['id']);
-        $conn->query("UPDATE custom_icons SET name='$name', slug='$slug', category='$category', color='$color', size='$size' WHERE id=$id");
-        $message = '<div class="alert alert-success">Icon updated successfully.</div>';
-        ErrorLogger::log("Icon updated: ID $id", 'INFO');
-    } else {
-        $message = '<div class="alert alert-danger">Please upload an SVG file.</div>';
     }
 }
 
 $edit_item = null;
 $show_form = false;
-if (isset($_GET['edit'])) {
+
+// Show form if there are errors (preserve data) or if edit/new is requested
+if (!empty($form_errors)) {
+    $show_form = true;
+    $edit_item = $form_data;
+} elseif (isset($_GET['edit'])) {
     $show_form = true;
     if ($_GET['edit'] !== 'new') {
         $id = intval($_GET['edit']);
@@ -158,6 +203,18 @@ $pagination = getPaginatedItems($conn, 'custom_icons', $page, 12, 'id DESC');
                 </div>
 
                 <?php echo $message; ?>
+                
+                <?php if (!empty($form_errors)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($form_errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Icons Grid View -->
                 <?php if (!$show_form): ?>

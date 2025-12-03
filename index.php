@@ -39,7 +39,7 @@ $page_title = 'Home';
                         $about = $conn->query("SELECT image_url FROM about LIMIT 1")->fetch_assoc();
                         $hero_image = getImageWithFallback($about['image_url'] ?? '', 'Hero Image', 500, 600);
                         ?>
-                        <img src="<?php echo $hero_image; ?>" alt="Hero" class="img-fluid rounded hero-img">
+                        <img src="<?php echo $hero_image; ?>" alt="Hero" class="img-fluid rounded hero-img" loading="lazy">
                     </div>
                 </div>
             </div>
@@ -100,7 +100,7 @@ $page_title = 'Home';
                     <div class="col-md-4 mb-4">
                         <div class="portfolio-card">
                             <img src="<?php echo $image_url; ?>" 
-                                 alt="<?php echo getImageAlt($item['title'], 'Portfolio Item'); ?>" class="img-fluid rounded">
+                                 alt="<?php echo getImageAlt($item['title'], 'Portfolio Item'); ?>" class="img-fluid rounded" loading="lazy">
                             <div class="portfolio-overlay">
                                 <h5><?php echo htmlspecialchars($item['title']); ?></h5>
                                 <p><?php echo htmlspecialchars(substr($item['description'], 0, 100)); ?>...</p>

@@ -92,12 +92,7 @@ $pagination = getPaginatedItems($conn, 'testimonials', $page, 10, 'id DESC');
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title; ?> - <?php echo SITE_NAME; ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/admin.css">
+    <?php include '../includes/admin-head.php'; ?>
     <style>
         .rating-display { color: #ffc107; font-size: 1.2rem; }
         .testimonial-preview { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 10px; }

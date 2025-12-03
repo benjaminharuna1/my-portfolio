@@ -3,19 +3,20 @@
  * Icon Helper Functions
  * Provides utilities for displaying custom SVG icons and Font Awesome icons
  * 
- * Icon Prefix System:
- * - ci-* = Custom Icon (SVG from database)
- * - fa-* = Font Awesome Icon
+ * Unified class system: all icons now get the 'icon' class for consistent styling
  */
 
 /**
  * Display an icon with automatic ci- prefix detection
  * @param string $name Icon name (with ci- or fa- prefix)
- * @param string $class CSS classes to apply
+ * @param string $class Additional CSS classes to apply
  * @param string $fallback Fallback Font Awesome icon if custom not found
  * @return string HTML for the icon
  */
 function icon($name, $class = '', $fallback = '') {
+    // Merge 'icon' base class with any custom classes
+    $class = trim('icon ' . $class);
+    
     // If it's a custom SVG icon (ci- prefix)
     if (strpos($name, 'ci-') === 0) {
         $svg = getCustomIconSVG($name, $class);
@@ -63,30 +64,12 @@ function getCustomIconSVG($name, $class = '') {
             return '';
         }
         
-        // Automatically add base class for styling and merge with user class
-        $base_class = 'tech-icon-svg';
-        if (!empty($class)) {
-            $class = $base_class . ' ' . $class;
+        // Ensure SVG uses currentColor for consistency
+        if (!preg_match('/fill=/i', $svg_content)) {
+            $svg_content = preg_replace('/<svg /i', '<svg class="' . htmlspecialchars($class) . '" fill="currentColor" ', $svg_content, 1);
         } else {
-            $class = $base_class;
+            $svg_content = preg_replace('/<svg /i', '<svg class="' . htmlspecialchars($class) . '" ', $svg_content, 1);
         }
-
-        // Ensure SVG uses currentColor for proper color inheritance
-        // Replace any hardcoded fill colors with currentColor
-        $svg_content = preg_replace('/fill="[^"]*"/', 'fill="currentColor"', $svg_content);
-        $svg_content = preg_replace('/stroke="[^"]*"/', 'stroke="currentColor"', $svg_content);
-        
-        // Remove any inline style fill/stroke that might override
-        $svg_content = preg_replace('/style="[^"]*fill:[^"]*"/', '', $svg_content);
-        $svg_content = preg_replace('/style="[^"]*stroke:[^"]*"/', '', $svg_content);
-        
-        // Add class and ensure fill/stroke are set to currentColor
-        $svg_content = preg_replace(
-            '/<svg /',
-            '<svg class="' . htmlspecialchars($class) . '" fill="currentColor" stroke="currentColor" ',
-            $svg_content,
-            1
-        );
         
         return $svg_content;
     }

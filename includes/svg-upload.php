@@ -104,15 +104,7 @@ class SVGUploader {
         ];
     }
     
-    /**
- * Clean and process SVG content safely
- * - Removes scripts, inline events, comments, XML/DOCTYPE
- * - Preserves paths, groups, defs, symbols
- * - Replaces fills with "currentColor" for CSS styling
- * @param string $svg Raw SVG content
- * @return string Cleaned SVG content
- */
-private function cleanSVG($svg) {
+    private function cleanSVG($svg) {
     // Ensure UTF-8 encoding
     if (!mb_check_encoding($svg, 'UTF-8')) {
         $svg = mb_convert_encoding($svg, 'UTF-8');
@@ -126,22 +118,31 @@ private function cleanSVG($svg) {
     $svg = preg_replace('/<!--.*?-->/is', '', $svg);
 
     // Remove <script> tags and content
-    $svg = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $svg);
+    $svg = preg_replace('/<script\b.*?<\/script>/is', '', $svg);
 
     // Remove inline event handlers (onclick, onmouseover, etc.)
     $svg = preg_replace('/\s+on\w+\s*=\s*["\'][^"\']*["\']/i', '', $svg);
 
-    // Remove <style> tags but keep the content of paths/groups
-    $svg = preg_replace('/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi', '', $svg);
+    // Keep <style> and <defs> intact to preserve SVG appearance
+    // Optional: you can also sanitize style content if needed
 
-    // Remove CDATA sections
-    $svg = preg_replace('/<!\[CDATA\[.*?\]\]>/is', '', $svg);
-
-    // Replace any existing fills with currentColor for CSS styling
-    $svg = preg_replace('/fill="[^"]*"/i', 'fill="currentColor"', $svg);
-
-    // Optional: replace stroke as well for consistent styling
-    $svg = preg_replace('/stroke="[^"]*"/i', 'stroke="currentColor"', $svg);
+    // Replace fill/stroke only for visible shapes (ignore <defs>)
+    $svg = preg_replace_callback('/<(path|circle|rect|ellipse|polygon|line|polyline|g)\b[^>]*>/i', function($matches) {
+        $tag = $matches[0];
+        // Add/replace fill="currentColor"
+        if (stripos($tag, 'fill=') !== false) {
+            $tag = preg_replace('/fill="[^"]*"/i', 'fill="currentColor"', $tag);
+        } else {
+            $tag = preg_replace('/<(\w+)/', '<$1 fill="currentColor"', $tag, 1);
+        }
+        // Add/replace stroke="currentColor"
+        if (stripos($tag, 'stroke=') !== false) {
+            $tag = preg_replace('/stroke="[^"]*"/i', 'stroke="currentColor"', $tag);
+        } else {
+            $tag = preg_replace('/<(\w+)/', '<$1 stroke="currentColor"', $tag, 1);
+        }
+        return $tag;
+    }, $svg);
 
     // Minify: remove excessive whitespace between tags
     $svg = preg_replace('/>\s+</', '><', $svg);
@@ -149,7 +150,6 @@ private function cleanSVG($svg) {
     // Trim any remaining whitespace
     $svg = trim($svg);
 
-    // Return cleaned SVG
     return $svg;
 }
 

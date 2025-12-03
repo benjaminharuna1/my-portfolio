@@ -105,45 +105,54 @@ class SVGUploader {
     }
     
     /**
-     * Clean and process SVG content
-     * @param string $svg Raw SVG content
-     * @return string Cleaned SVG content
-     */
-    private function cleanSVG($svg) {
-        // Ensure UTF-8 encoding
-        if (!mb_check_encoding($svg, 'UTF-8')) {
-            $svg = mb_convert_encoding($svg, 'UTF-8');
-        }
-        
-        // Remove XML declaration
-        $svg = preg_replace('/<\?xml.*?\?>/i', '', $svg);
-        
-        // Remove DOCTYPE
-        $svg = preg_replace('/<!DOCTYPE.*?>/is', '', $svg);
-        
-        // Remove comments
-        $svg = preg_replace('/<!--.*?-->/is', '', $svg);
-        
-        // Remove script tags (security)
-        $svg = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $svg);
-        
-        // Remove event handlers (security)
-        $svg = preg_replace('/on\w+\s*=\s*["\'][^"\']*["\']/i', '', $svg);
-        
-        // Remove embedded styles (so CSS can style it)
-        $svg = preg_replace('/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi', '', $svg);
-        
-        // Remove CDATA sections
-        $svg = preg_replace('/<!\[CDATA\[.*?\]\]>/is', '', $svg);
-        
-        // Minify: remove excessive whitespace
-        $svg = preg_replace('/\s+/', ' ', $svg);
-        
-        // Trim whitespace
-        $svg = trim($svg);
-        
-        return $svg;
+ * Clean and process SVG content safely
+ * - Removes scripts, inline events, comments, XML/DOCTYPE
+ * - Preserves paths, groups, defs, symbols
+ * - Replaces fills with "currentColor" for CSS styling
+ * @param string $svg Raw SVG content
+ * @return string Cleaned SVG content
+ */
+private function cleanSVG($svg) {
+    // Ensure UTF-8 encoding
+    if (!mb_check_encoding($svg, 'UTF-8')) {
+        $svg = mb_convert_encoding($svg, 'UTF-8');
     }
+
+    // Remove XML declaration & DOCTYPE
+    $svg = preg_replace('/<\?xml.*?\?>/i', '', $svg);
+    $svg = preg_replace('/<!DOCTYPE.*?>/is', '', $svg);
+
+    // Remove comments
+    $svg = preg_replace('/<!--.*?-->/is', '', $svg);
+
+    // Remove <script> tags and content
+    $svg = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $svg);
+
+    // Remove inline event handlers (onclick, onmouseover, etc.)
+    $svg = preg_replace('/\s+on\w+\s*=\s*["\'][^"\']*["\']/i', '', $svg);
+
+    // Remove <style> tags but keep the content of paths/groups
+    $svg = preg_replace('/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi', '', $svg);
+
+    // Remove CDATA sections
+    $svg = preg_replace('/<!\[CDATA\[.*?\]\]>/is', '', $svg);
+
+    // Replace any existing fills with currentColor for CSS styling
+    $svg = preg_replace('/fill="[^"]*"/i', 'fill="currentColor"', $svg);
+
+    // Optional: replace stroke as well for consistent styling
+    $svg = preg_replace('/stroke="[^"]*"/i', 'stroke="currentColor"', $svg);
+
+    // Minify: remove excessive whitespace between tags
+    $svg = preg_replace('/>\s+</', '><', $svg);
+
+    // Trim any remaining whitespace
+    $svg = trim($svg);
+
+    // Return cleaned SVG
+    return $svg;
+}
+
     
     /**
      * Generate unique filename for SVG

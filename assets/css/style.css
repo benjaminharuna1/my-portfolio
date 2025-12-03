@@ -205,17 +205,27 @@ p {
 
 /* Tech Icon SVG - Custom SVG icons */
 .tech-icon-svg {
-    width: 1.3em;
-    height: 1.3em;
     display: inline-block;
     vertical-align: middle;
-    fill: var(--secondary-color);
+    width: 1em;
+    height: 1em;
+    fill: currentColor; /* inherits parent color */
     transition: all 0.3s ease;
 }
 
 .tech-icon:hover .tech-icon-svg {
     fill: var(--primary-color);
 }
+
+.tech-icon-svg:hover {
+    transform: scale(1.2);
+}
+
+/* Optional size utilities */
+.tech-icon-svg-sm { font-size: 0.75em; }
+.tech-icon-svg-md { font-size: 1em; }
+.tech-icon-svg-lg { font-size: 1.5em; }
+.tech-icon-svg-xl { font-size: 2em; }
 
 /* Portfolio Section */
 .portfolio-section {

@@ -3,6 +3,7 @@ require '../config.php';
 require '../includes/upload.php';
 require '../includes/image-helper.php';
 require '../includes/admin-list-helper.php';
+require '../includes/icon-helper.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . SITE_URL . '/login.php');

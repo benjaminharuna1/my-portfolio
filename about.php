@@ -1,6 +1,7 @@
 <?php
 require 'config.php';
 require 'includes/image-helper.php';
+require 'includes/icon-helper.php';
 $page_title = 'About';
 $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
 ?>
@@ -49,8 +50,15 @@ $about = $conn->query("SELECT * FROM about LIMIT 1")->fetch_assoc();
                 ?>
                 <div class="col-md-6">
                     <div class="skill-item mb-4">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span><?php echo htmlspecialchars($skill['name']); ?></span>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <?php if (!empty($skill['icon'])): ?>
+                                    <div style="font-size: 1.5rem;">
+                                        <?php echo icon($skill['icon'], '', 'fa-code'); ?>
+                                    </div>
+                                <?php endif; ?>
+                                <span><?php echo htmlspecialchars($skill['name']); ?></span>
+                            </div>
                             <span><?php echo $skill['proficiency']; ?>%</span>
                         </div>
                         <div class="progress">

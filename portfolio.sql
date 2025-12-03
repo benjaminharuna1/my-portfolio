@@ -251,6 +251,7 @@ CREATE TABLE IF NOT EXISTS `skills` (
   `name` varchar(100) NOT NULL,
   `proficiency` int NOT NULL CHECK (`proficiency` >= 0 AND `proficiency` <= 100),
   `category` varchar(100) DEFAULT NULL,
+  `icon` varchar(100) DEFAULT NULL,
   `sort_order` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

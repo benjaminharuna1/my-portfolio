@@ -7,7 +7,7 @@ $category = isset($_GET['category']) ? $_GET['category'] : '';
 
 if ($category) {
     $category = $conn->real_escape_string($category);
-    $result = $conn->query("SELECT * FROM portfolio_items WHERE category = '$category' AND status = 'published'");
+    $result = $conn->query("SELECT pi.* FROM portfolio_items pi JOIN categories c ON pi.category_id = c.id WHERE c.slug = '$category' AND pi.status = 'published'");
 } else {
     $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published'");
 }
@@ -23,12 +23,17 @@ if ($category) {
             <div class="text-center mb-5">
                 <a href="<?php echo SITE_URL; ?>/portfolio.php" class="btn btn-outline-primary me-2">All</a>
                 <?php
-                $categories = $conn->query("SELECT DISTINCT category FROM portfolio_items WHERE status = 'published' ORDER BY category");
+                $categories = $conn->query("SELECT id, name, slug, icon FROM categories ORDER BY name");
                 while ($cat = $categories->fetch_assoc()):
-                    $cat_name = htmlspecialchars($cat['category']);
+                    $cat_name = htmlspecialchars($cat['name']);
+                    $cat_slug = htmlspecialchars($cat['slug']);
                 ?>
-                <a href="<?php echo SITE_URL; ?>/portfolio.php?category=<?php echo urlencode($cat['category']); ?>" class="btn btn-outline-primary me-2">
-                    <?php echo icon($cat['category'], '', 'fa-folder'); ?>
+                <a href="<?php echo SITE_URL; ?>/portfolio.php?category=<?php echo urlencode($cat_slug); ?>" class="btn btn-outline-primary me-2">
+                    <?php if (!empty($cat['icon'])): ?>
+                        <?php echo icon($cat['icon'], '', 'fa-folder'); ?>
+                    <?php else: ?>
+                        <i class="fas fa-folder"></i>
+                    <?php endif; ?>
                     <?php echo $cat_name; ?>
                 </a>
                 <?php endwhile; ?>

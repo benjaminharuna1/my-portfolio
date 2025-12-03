@@ -70,7 +70,7 @@ $page_title = 'Home';
                                         foreach ($icons as $icon_name):
                                             if ($icon_name):
                                         ?>
-                                            <span class="tech-icon" style="display: inline-flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                            <span class="tech-icon">
                                                 <?php echo icon($icon_name, 'tech-icon-svg'); ?>
                                             </span>
                                         <?php 

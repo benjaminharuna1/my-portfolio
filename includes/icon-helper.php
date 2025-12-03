@@ -71,23 +71,22 @@ function getCustomIconSVG($name, $class = '') {
             $class = $base_class;
         }
 
-        // Make sure SVG uses currentColor so it inherits parent color
-        if (!preg_match('/style=/', $svg_content)) {
-            $svg_content = preg_replace(
-                '/<svg /',
-                '<svg class="' . htmlspecialchars($class) . '" fill="currentColor" ',
-                $svg_content,
-                1
-            );
-        } else {
-            // If inline style exists, still add class
-            $svg_content = preg_replace(
-                '/<svg /',
-                '<svg class="' . htmlspecialchars($class) . '" ',
-                $svg_content,
-                1
-            );
-        }
+        // Ensure SVG uses currentColor for proper color inheritance
+        // Replace any hardcoded fill colors with currentColor
+        $svg_content = preg_replace('/fill="[^"]*"/', 'fill="currentColor"', $svg_content);
+        $svg_content = preg_replace('/stroke="[^"]*"/', 'stroke="currentColor"', $svg_content);
+        
+        // Remove any inline style fill/stroke that might override
+        $svg_content = preg_replace('/style="[^"]*fill:[^"]*"/', '', $svg_content);
+        $svg_content = preg_replace('/style="[^"]*stroke:[^"]*"/', '', $svg_content);
+        
+        // Add class and ensure fill/stroke are set to currentColor
+        $svg_content = preg_replace(
+            '/<svg /',
+            '<svg class="' . htmlspecialchars($class) . '" fill="currentColor" stroke="currentColor" ',
+            $svg_content,
+            1
+        );
         
         return $svg_content;
     }

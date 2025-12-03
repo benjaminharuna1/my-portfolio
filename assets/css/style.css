@@ -82,16 +82,29 @@ p {
 .social-icons {
     display: flex;
     gap: 15px;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 10;
 }
 
 .social-icons a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0.8;
+    opacity: 0.9;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .social-icons a:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-8px) scale(1.1);
     opacity: 1;
 }
@@ -180,6 +193,26 @@ p {
     transform: scale(1.1);
 }
 
+/* Service icon SVG styling */
+.service-icon svg {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+    color: inherit;
+    width: 1em;
+    height: 1em;
+}
+
+.service-icon svg path,
+.service-icon svg circle,
+.service-icon svg rect,
+.service-icon svg polygon,
+.service-icon svg polyline,
+.service-icon svg line {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+}
+
+
 /* Tech Icons */
 .tech-icons {
     display: flex;
@@ -191,6 +224,9 @@ p {
 }
 
 .tech-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.3rem;
     color: var(--secondary-color);
     transition: all 0.3s ease;
@@ -209,12 +245,28 @@ p {
     vertical-align: middle;
     width: 1em;
     height: 1em;
-    fill: currentColor; /* inherits parent color */
+    fill: var(--secondary-color) !important; /* matches .tech-icon color */
+    stroke: var(--secondary-color) !important; /* for stroked SVGs */
+    color: var(--secondary-color);
     transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+/* Ensure all paths and shapes inherit color */
+.tech-icon-svg path,
+.tech-icon-svg circle,
+.tech-icon-svg rect,
+.tech-icon-svg polygon,
+.tech-icon-svg polyline,
+.tech-icon-svg line {
+    fill: var(--primary-color) !important;
+    stroke: var(--primary-color) !important;
 }
 
 .tech-icon:hover .tech-icon-svg {
-    fill: var(--primary-color);
+    fill: var(--primary-color) !important;
+    stroke: var(--primary-color) !important;
+    stroke: var(--primary-color) !important;
 }
 
 .tech-icon-svg:hover {

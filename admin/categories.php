@@ -10,6 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $page_title = 'Manage Categories';
 $message = '';
+$form_data = [];
+$form_errors = [];
 
 // Delete category
 if (isset($_GET['delete'])) {
@@ -21,27 +23,56 @@ if (isset($_GET['delete'])) {
 
 // Add/Edit category
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $conn->real_escape_string($_POST['name']);
-    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
-    $description = $conn->real_escape_string($_POST['description']);
-    $color = $conn->real_escape_string($_POST['color']);
-    $icon = $conn->real_escape_string($_POST['icon']);
+    // Preserve form data
+    $form_data = [
+        'id' => isset($_POST['id']) ? intval($_POST['id']) : '',
+        'name' => $_POST['name'] ?? '',
+        'description' => $_POST['description'] ?? '',
+        'color' => $_POST['color'] ?? '#667eea',
+        'icon' => $_POST['icon'] ?? ''
+    ];
     
-    if (isset($_POST['id']) && $_POST['id']) {
-        $id = intval($_POST['id']);
-        $conn->query("UPDATE categories SET name='$name', slug='$slug', description='$description', color='$color', icon='$icon' WHERE id=$id");
-        $message = '<div class="alert alert-success">Category updated successfully.</div>';
-        ErrorLogger::log("Category updated: ID $id", 'INFO');
-    } else {
-        $conn->query("INSERT INTO categories (name, slug, description, color, icon) VALUES ('$name', '$slug', '$description', '$color', '$icon')");
-        $message = '<div class="alert alert-success">Category added successfully.</div>';
-        ErrorLogger::log("Category created: $name", 'INFO');
+    // Validate required fields
+    if (empty($form_data['name'])) {
+        $form_errors[] = 'Category name is required.';
+    }
+    
+    if (empty($form_errors)) {
+        $name = $conn->real_escape_string($form_data['name']);
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
+        $description = $conn->real_escape_string($form_data['description']);
+        $color = $conn->real_escape_string($form_data['color']);
+        $icon = $conn->real_escape_string($form_data['icon']);
+        
+        if ($form_data['id']) {
+            $id = $form_data['id'];
+            if ($conn->query("UPDATE categories SET name='$name', slug='$slug', description='$description', color='$color', icon='$icon' WHERE id=$id")) {
+                $message = '<div class="alert alert-success">Category updated successfully.</div>';
+                ErrorLogger::log("Category updated: ID $id", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        } else {
+            if ($conn->query("INSERT INTO categories (name, slug, description, color, icon) VALUES ('$name', '$slug', '$description', '$color', '$icon')")) {
+                $message = '<div class="alert alert-success">Category added successfully.</div>';
+                ErrorLogger::log("Category created: $name", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        }
     }
 }
 
 $edit_item = null;
 $show_form = false;
-if (isset($_GET['edit'])) {
+
+// Show form if there are errors (preserve data) or if edit/new is requested
+if (!empty($form_errors)) {
+    $show_form = true;
+    $edit_item = $form_data;
+} elseif (isset($_GET['edit'])) {
     $show_form = true;
     if ($_GET['edit'] !== 'new') {
         $id = intval($_GET['edit']);
@@ -90,6 +121,18 @@ $pagination = getPaginatedItems($conn, 'categories', $page, 10, 'id DESC');
                 </div>
 
                 <?php echo $message; ?>
+                
+                <?php if (!empty($form_errors)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($form_errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Categories List Table -->
                 <?php if (!$show_form): ?>
@@ -159,7 +202,7 @@ $pagination = getPaginatedItems($conn, 'categories', $page, 10, 'id DESC');
                                     
                                     <div class="mb-3">
                                         <label for="name" class="form-label">Category Name *</label>
-                                        <input type="text" class="form-control" id="name" name="name" value="<?php echo $edit_item && !empty($edit_item['name']) ? htmlspecialchars($edit_item['name']) : ''; ?>" required>
+                                        <input type="text" class="form-control <?php echo in_array('name', array_keys($form_errors)) ? 'is-invalid' : ''; ?>" id="name" name="name" value="<?php echo $edit_item && !empty($edit_item['name']) ? htmlspecialchars($edit_item['name']) : ''; ?>" required>
                                         <small class="text-muted">The slug will be auto-generated from the name</small>
                                     </div>
 

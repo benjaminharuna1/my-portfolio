@@ -10,6 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $page_title = 'Manage Services';
 $message = '';
+$form_data = [];
+$form_errors = [];
 
 // Delete service
 if (isset($_GET['delete'])) {
@@ -21,27 +23,61 @@ if (isset($_GET['delete'])) {
 
 // Add/Edit service
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = $conn->real_escape_string($_POST['title']);
-    $description = $conn->real_escape_string($_POST['description']);
-    $icon = $conn->real_escape_string($_POST['icon']);
-    $tech_icons = $conn->real_escape_string($_POST['tech_icons']);
-    $status = isset($_POST['status']) ? $conn->real_escape_string($_POST['status']) : 'published';
+    // Preserve form data
+    $form_data = [
+        'id' => isset($_POST['id']) ? intval($_POST['id']) : '',
+        'title' => $_POST['title'] ?? '',
+        'description' => $_POST['description'] ?? '',
+        'icon' => $_POST['icon'] ?? '',
+        'tech_icons' => $_POST['tech_icons'] ?? '',
+        'status' => $_POST['status'] ?? 'published'
+    ];
     
-    if (isset($_POST['id']) && $_POST['id']) {
-        $id = intval($_POST['id']);
-        $conn->query("UPDATE services SET title='$title', description='$description', icon='$icon', tech_icons='$tech_icons', status='$status' WHERE id=$id");
-        $message = '<div class="alert alert-success">Service updated successfully.</div>';
-        ErrorLogger::log("Service updated: ID $id", 'INFO');
-    } else {
-        $conn->query("INSERT INTO services (title, description, icon, tech_icons, status) VALUES ('$title', '$description', '$icon', '$tech_icons', '$status')");
-        $message = '<div class="alert alert-success">Service added successfully.</div>';
-        ErrorLogger::log("Service created: $title", 'INFO');
+    // Validate required fields
+    if (empty($form_data['title'])) {
+        $form_errors[] = 'Service title is required.';
+    }
+    
+    if (empty($form_data['description'])) {
+        $form_errors[] = 'Service description is required.';
+    }
+    
+    if (empty($form_errors)) {
+        $title = $conn->real_escape_string($form_data['title']);
+        $description = $conn->real_escape_string($form_data['description']);
+        $icon = $conn->real_escape_string($form_data['icon']);
+        $tech_icons = $conn->real_escape_string($form_data['tech_icons']);
+        $status = $conn->real_escape_string($form_data['status']);
+        
+        if ($form_data['id']) {
+            $id = $form_data['id'];
+            if ($conn->query("UPDATE services SET title='$title', description='$description', icon='$icon', tech_icons='$tech_icons', status='$status' WHERE id=$id")) {
+                $message = '<div class="alert alert-success">Service updated successfully.</div>';
+                ErrorLogger::log("Service updated: ID $id", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        } else {
+            if ($conn->query("INSERT INTO services (title, description, icon, tech_icons, status) VALUES ('$title', '$description', '$icon', '$tech_icons', '$status')")) {
+                $message = '<div class="alert alert-success">Service added successfully.</div>';
+                ErrorLogger::log("Service created: $title", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        }
     }
 }
 
 $edit_item = null;
 $show_form = false;
-if (isset($_GET['edit'])) {
+
+// Show form if there are errors (preserve data) or if edit/new is requested
+if (!empty($form_errors)) {
+    $show_form = true;
+    $edit_item = $form_data;
+} elseif (isset($_GET['edit'])) {
     $show_form = true;
     if ($_GET['edit'] !== 'new') {
         $id = intval($_GET['edit']);
@@ -80,6 +116,18 @@ $pagination = getPaginatedItems($conn, 'services', $page, 10, 'id DESC');
                 </div>
 
                 <?php echo $message; ?>
+                
+                <?php if (!empty($form_errors)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($form_errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Services List Table -->
                 <?php if (!$show_form): ?>

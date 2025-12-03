@@ -10,6 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $page_title = 'Manage Skills';
 $message = '';
+$form_data = [];
+$form_errors = [];
 
 // Delete skill
 if (isset($_GET['delete'])) {
@@ -21,32 +23,61 @@ if (isset($_GET['delete'])) {
 
 // Add/Edit skill
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $conn->real_escape_string($_POST['name']);
-    $proficiency = intval($_POST['proficiency']);
-    $category = $conn->real_escape_string($_POST['category']);
-    $icon = $conn->real_escape_string($_POST['icon']);
-    $sort_order = isset($_POST['sort_order']) ? intval($_POST['sort_order']) : 0;
+    // Preserve form data
+    $form_data = [
+        'id' => isset($_POST['id']) ? intval($_POST['id']) : '',
+        'name' => $_POST['name'] ?? '',
+        'proficiency' => intval($_POST['proficiency'] ?? 50),
+        'category' => $_POST['category'] ?? '',
+        'icon' => $_POST['icon'] ?? '',
+        'sort_order' => intval($_POST['sort_order'] ?? 0)
+    ];
     
-    // Validate proficiency
-    if ($proficiency < 0 || $proficiency > 100) {
-        $proficiency = 50;
+    // Validate required fields
+    if (empty($form_data['name'])) {
+        $form_errors[] = 'Skill name is required.';
     }
     
-    if (isset($_POST['id']) && $_POST['id']) {
-        $id = intval($_POST['id']);
-        $conn->query("UPDATE skills SET name='$name', proficiency=$proficiency, category='$category', icon='$icon', sort_order=$sort_order WHERE id=$id");
-        $message = '<div class="alert alert-success">Skill updated successfully.</div>';
-        ErrorLogger::log("Skill updated: ID $id", 'INFO');
-    } else {
-        $conn->query("INSERT INTO skills (name, proficiency, category, icon, sort_order) VALUES ('$name', $proficiency, '$category', '$icon', $sort_order)");
-        $message = '<div class="alert alert-success">Skill added successfully.</div>';
-        ErrorLogger::log("Skill created: $name", 'INFO');
+    if ($form_data['proficiency'] < 0 || $form_data['proficiency'] > 100) {
+        $form_errors[] = 'Proficiency must be between 0 and 100.';
+    }
+    
+    if (empty($form_errors)) {
+        $name = $conn->real_escape_string($form_data['name']);
+        $proficiency = $form_data['proficiency'];
+        $category = $conn->real_escape_string($form_data['category']);
+        $icon = $conn->real_escape_string($form_data['icon']);
+        $sort_order = $form_data['sort_order'];
+        
+        if ($form_data['id']) {
+            $id = $form_data['id'];
+            if ($conn->query("UPDATE skills SET name='$name', proficiency=$proficiency, category='$category', icon='$icon', sort_order=$sort_order WHERE id=$id")) {
+                $message = '<div class="alert alert-success">Skill updated successfully.</div>';
+                ErrorLogger::log("Skill updated: ID $id", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        } else {
+            if ($conn->query("INSERT INTO skills (name, proficiency, category, icon, sort_order) VALUES ('$name', $proficiency, '$category', '$icon', $sort_order)")) {
+                $message = '<div class="alert alert-success">Skill added successfully.</div>';
+                ErrorLogger::log("Skill created: $name", 'INFO');
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        }
     }
 }
 
 $edit_item = null;
 $show_form = false;
-if (isset($_GET['edit'])) {
+
+// Show form if there are errors (preserve data) or if edit/new is requested
+if (!empty($form_errors)) {
+    $show_form = true;
+    $edit_item = $form_data;
+} elseif (isset($_GET['edit'])) {
     $show_form = true;
     if ($_GET['edit'] !== 'new') {
         $id = intval($_GET['edit']);
@@ -105,6 +136,18 @@ $pagination = getPaginatedItems($conn, 'skills', $page, 10, 'sort_order ASC, id 
                 </div>
 
                 <?php echo $message; ?>
+                
+                <?php if (!empty($form_errors)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($form_errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Skills List Table -->
                 <?php if (!$show_form): ?>

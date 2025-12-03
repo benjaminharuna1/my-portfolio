@@ -9,6 +9,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $page_title = 'Manage Social Links';
 $message = '';
+$form_data = [];
+$form_errors = [];
 
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
@@ -17,22 +19,53 @@ if (isset($_GET['delete'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $platform = $conn->real_escape_string($_POST['platform']);
-    $url = $conn->real_escape_string($_POST['url']);
-    $icon = $conn->real_escape_string($_POST['icon']);
+    // Preserve form data
+    $form_data = [
+        'id' => isset($_POST['id']) ? intval($_POST['id']) : '',
+        'platform' => $_POST['platform'] ?? '',
+        'url' => $_POST['url'] ?? '',
+        'icon' => $_POST['icon'] ?? ''
+    ];
     
-    if (isset($_POST['id']) && $_POST['id']) {
-        $id = intval($_POST['id']);
-        $conn->query("UPDATE social_links SET platform='$platform', url='$url', icon='$icon' WHERE id=$id");
-        $message = '<div class="alert alert-success">Social link updated.</div>';
-    } else {
-        $conn->query("INSERT INTO social_links (platform, url, icon) VALUES ('$platform', '$url', '$icon')");
-        $message = '<div class="alert alert-success">Social link added.</div>';
+    // Validate required fields
+    if (empty($form_data['platform'])) {
+        $form_errors[] = 'Platform name is required.';
+    }
+    
+    if (empty($form_data['url'])) {
+        $form_errors[] = 'URL is required.';
+    } elseif (!filter_var($form_data['url'], FILTER_VALIDATE_URL)) {
+        $form_errors[] = 'Invalid URL format.';
+    }
+    
+    if (empty($form_errors)) {
+        $platform = $conn->real_escape_string($form_data['platform']);
+        $url = $conn->real_escape_string($form_data['url']);
+        $icon = $conn->real_escape_string($form_data['icon']);
+        
+        if ($form_data['id']) {
+            $id = $form_data['id'];
+            if ($conn->query("UPDATE social_links SET platform='$platform', url='$url', icon='$icon' WHERE id=$id")) {
+                $message = '<div class="alert alert-success">Social link updated.</div>';
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        } else {
+            if ($conn->query("INSERT INTO social_links (platform, url, icon) VALUES ('$platform', '$url', '$icon')")) {
+                $message = '<div class="alert alert-success">Social link added.</div>';
+                $form_data = [];
+            } else {
+                $form_errors[] = 'Database error: ' . $conn->error;
+            }
+        }
     }
 }
 
 $edit_item = null;
-if (isset($_GET['edit'])) {
+if (!empty($form_errors)) {
+    $edit_item = $form_data;
+} elseif (isset($_GET['edit'])) {
     $id = intval($_GET['edit']);
     $edit_item = $conn->query("SELECT * FROM social_links WHERE id = $id")->fetch_assoc();
 }
@@ -58,6 +91,18 @@ if (isset($_GET['edit'])) {
                 </div>
 
                 <?php echo $message; ?>
+                
+                <?php if (!empty($form_errors)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($form_errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
                 <div class="row mt-4">
                     <div class="col-md-6">

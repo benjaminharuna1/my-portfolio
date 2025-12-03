@@ -7,7 +7,15 @@ $category = isset($_GET['category']) ? $_GET['category'] : '';
 
 if ($category) {
     $category = $conn->real_escape_string($category);
-    $result = $conn->query("SELECT pi.* FROM portfolio_items pi JOIN categories c ON pi.category_id = c.id WHERE c.slug = '$category' AND pi.status = 'published' ORDER BY pi.id DESC");
+    // Get the category name from slug
+    $cat_result = $conn->query("SELECT name FROM categories WHERE slug = '$category'");
+    if ($cat_result && $cat_result->num_rows > 0) {
+        $cat_row = $cat_result->fetch_assoc();
+        $cat_name = $conn->real_escape_string($cat_row['name']);
+        $result = $conn->query("SELECT * FROM portfolio_items WHERE category = '$cat_name' AND status = 'published' ORDER BY id DESC");
+    } else {
+        $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published' ORDER BY id DESC");
+    }
 } else {
     $result = $conn->query("SELECT * FROM portfolio_items WHERE status = 'published' ORDER BY id DESC");
 }

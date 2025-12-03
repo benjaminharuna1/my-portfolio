@@ -391,7 +391,7 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                         </div>
 
                         <!-- Add Images to Portfolio -->
-                        <?php if ($edit_item): ?>
+                        <?php if ($show_form): ?>
                         <div class="card mt-4">
                             <div class="card-header">
                                 <h5>Portfolio Images Gallery</h5>
@@ -461,28 +461,32 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                 <?php endif; ?>
 
                                 <!-- Display Gallery -->
-                                <?php
-                                $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = " . $edit_item['id'] . " ORDER BY sort_order");
-                                if ($images->num_rows > 0):
-                                ?>
-                                <div class="image-gallery" id="sortableGallery" style="margin-top: 20px;">
-                                    <?php while ($img = $images->fetch_assoc()): ?>
-                                    <?php if (!empty($img['image_url'])): ?>
-                                    <div class="image-item" draggable="true" data-image-id="<?php echo $img['id']; ?>">
-                                        <div class="image-item-inner">
-                                            <img src="<?php echo getImageUrl($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
-                                            <div class="image-item-overlay">
-                                                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-                                                <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
+                                <?php if ($edit_item && isset($edit_item['id'])): ?>
+                                    <?php
+                                    $images = $conn->query("SELECT * FROM portfolio_images WHERE portfolio_id = " . $edit_item['id'] . " ORDER BY sort_order");
+                                    if ($images->num_rows > 0):
+                                    ?>
+                                    <div class="image-gallery" id="sortableGallery" style="margin-top: 20px;">
+                                        <?php while ($img = $images->fetch_assoc()): ?>
+                                        <?php if (!empty($img['image_url'])): ?>
+                                        <div class="image-item" draggable="true" data-image-id="<?php echo $img['id']; ?>">
+                                            <div class="image-item-inner">
+                                                <img src="<?php echo getImageUrl($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
+                                                <div class="image-item-overlay">
+                                                    <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                                                    <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
+                                                </div>
                                             </div>
                                         </div>
+                                        <?php endif; ?>
+                                        <?php endwhile; ?>
                                     </div>
+                                    <small class="text-muted d-block mt-2">💡 Drag images to reorder the gallery</small>
+                                    <?php else: ?>
+                                    <p class="text-muted">No images added yet. Upload your first image above.</p>
                                     <?php endif; ?>
-                                    <?php endwhile; ?>
-                                </div>
-                                <small class="text-muted d-block mt-2">💡 Drag images to reorder the gallery</small>
                                 <?php else: ?>
-                                <p class="text-muted">No images added yet. Upload your first image above.</p>
+                                    <p class="text-muted">Save the portfolio item first, then you can add images to the gallery.</p>
                                 <?php endif; ?>
                             </div>
                         </div>

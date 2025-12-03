@@ -28,7 +28,7 @@ $page_title = 'Home';
                     $subtitle = $about && !empty($about['subtitle']) ? htmlspecialchars($about['subtitle']) : "Web Developer";
                     ?>
                     <p class="text-muted mb-2"><?php echo $greeting; ?></p>
-                    <h1 class="display-4 fw-bold mb-3">I'm a <span class="text-primary"><?php echo $subtitle; ?></span></h1>
+                    <h1 class="display-4 fw-bold mb-3">I'm a <span><?php echo $subtitle; ?></span></h1>
                     <p class="lead mb-4">Creating beautiful and functional web experiences with modern technologies.</p>
                     <div class="button-group">
                         <a href="<?php echo SITE_URL; ?>/about.php" class="btn btn-primary btn-lg me-3">

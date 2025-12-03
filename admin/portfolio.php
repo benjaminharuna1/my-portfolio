@@ -12,6 +12,15 @@ if (!isset($_SESSION['user_id'])) {
 $page_title = 'Manage Portfolio';
 $message = '';
 
+// Check if redirected after deletion
+if (isset($_GET['deleted'])) {
+    if ($_GET['deleted'] === 'image') {
+        $message = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Image deleted successfully.</div>';
+    } elseif ($_GET['deleted'] === 'item') {
+        $message = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Portfolio item deleted successfully.</div>';
+    }
+}
+
 // Delete portfolio item
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
@@ -27,20 +36,27 @@ if (isset($_GET['delete'])) {
         }
     }
     $conn->query("DELETE FROM portfolio_items WHERE id = $id");
-    $message = '<div class="alert alert-success">Portfolio item deleted successfully.</div>';
     ErrorLogger::log("Portfolio item deleted: ID $id", 'INFO');
+    
+    // Redirect back to portfolio list
+    header('Location: ' . SITE_URL . '/admin/portfolio.php?deleted=item');
+    exit;
 }
 
 // Delete portfolio image
 if (isset($_GET['delete_image'])) {
     $image_id = intval($_GET['delete_image']);
     $image = $conn->query("SELECT image_filename, portfolio_id FROM portfolio_images WHERE id = $image_id")->fetch_assoc();
+    $portfolio_id = $image['portfolio_id'] ?? 0;
+    
     if ($image && $image['image_filename']) {
         deleteImage($image['image_filename']);
     }
     $conn->query("DELETE FROM portfolio_images WHERE id = $image_id");
-    $message = '<div class="alert alert-success">Image deleted successfully.</div>';
-    ErrorLogger::log("Portfolio image deleted: ID $image_id", 'INFO');
+    
+    // Redirect back to edit view instead of exiting
+    header('Location: ' . SITE_URL . '/admin/portfolio.php?edit=' . $portfolio_id . '&deleted=image');
+    exit;
 }
 
 // Add/Edit portfolio item
@@ -89,26 +105,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-// Add portfolio image
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_image') {
+// Save images with alt text
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_images_with_alt') {
     $portfolio_id = intval($_POST['portfolio_id']);
-    $alt_text = $conn->real_escape_string($_POST['alt_text']);
-    $image_url = '';
-    $image_filename = '';
+    $upload_count = 0;
+    $error_count = 0;
     
-    if (isset($_FILES['portfolio_image']) && $_FILES['portfolio_image']['error'] === 0) {
-        $upload = uploadImage($_FILES['portfolio_image']);
-        if ($upload['success']) {
-            $image_filename = $upload['filename'];
-            $image_url = $upload['url'];
+    // Process each uploaded image with its alt text
+    if (isset($_POST['image_data']) && is_array($_POST['image_data'])) {
+        foreach ($_POST['image_data'] as $image_data) {
+            $image_url = $conn->real_escape_string($image_data['url']);
+            $image_filename = $conn->real_escape_string($image_data['filename']);
+            $alt_text = $conn->real_escape_string($image_data['alt_text']);
             
             $sort_order = $conn->query("SELECT MAX(sort_order) as max_order FROM portfolio_images WHERE portfolio_id = $portfolio_id")->fetch_assoc()['max_order'];
             $sort_order = ($sort_order === null) ? 0 : $sort_order + 1;
             
-            $conn->query("INSERT INTO portfolio_images (portfolio_id, image_url, image_filename, alt_text, sort_order) VALUES ($portfolio_id, '$image_url', '$image_filename', '$alt_text', $sort_order)");
-            $message = '<div class="alert alert-success">Image added to portfolio successfully.</div>';
+            if ($conn->query("INSERT INTO portfolio_images (portfolio_id, image_url, image_filename, alt_text, sort_order) VALUES ($portfolio_id, '$image_url', '$image_filename', '$alt_text', $sort_order)")) {
+                $upload_count++;
+            } else {
+                $error_count++;
+            }
+        }
+        
+        // Display results
+        if ($upload_count > 0 && $error_count === 0) {
+            $message = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> ' . $upload_count . ' image(s) added successfully.</div>';
+        } elseif ($upload_count > 0 && $error_count > 0) {
+            $message = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ' . $upload_count . ' image(s) added, but ' . $error_count . ' failed.</div>';
         } else {
-            $message = '<div class="alert alert-danger">' . $upload['message'] . '</div>';
+            $message = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Failed to save images.</div>';
+        }
+    }
+}
+
+// Add portfolio images (multiple) - Upload and preview
+$uploaded_images = [];
+$show_alt_text_form = false;
+$upload_message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_image') {
+    $portfolio_id = intval($_POST['portfolio_id']);
+    $error_count = 0;
+    $success_count = 0;
+    
+    // Handle multiple file uploads
+    if (isset($_FILES['portfolio_images']) && is_array($_FILES['portfolio_images']['name'])) {
+        $file_count = count($_FILES['portfolio_images']['name']);
+        
+        for ($i = 0; $i < $file_count; $i++) {
+            // Skip empty files
+            if ($_FILES['portfolio_images']['error'][$i] !== 0) {
+                $error_count++;
+                ErrorLogger::log("File upload error for file $i: " . $_FILES['portfolio_images']['error'][$i], 'WARNING');
+                continue;
+            }
+            
+            // Create single file array for uploadImage function
+            $single_file = [
+                'name' => $_FILES['portfolio_images']['name'][$i],
+                'type' => $_FILES['portfolio_images']['type'][$i],
+                'tmp_name' => $_FILES['portfolio_images']['tmp_name'][$i],
+                'error' => $_FILES['portfolio_images']['error'][$i],
+                'size' => $_FILES['portfolio_images']['size'][$i]
+            ];
+            
+            $upload = uploadImage($single_file);
+            if ($upload['success']) {
+                $uploaded_images[] = [
+                    'filename' => $upload['filename'],
+                    'url' => $upload['url'],
+                    'name' => $_FILES['portfolio_images']['name'][$i]
+                ];
+                $success_count++;
+                ErrorLogger::log("Image uploaded successfully: " . $_FILES['portfolio_images']['name'][$i], 'INFO');
+            } else {
+                $error_count++;
+                ErrorLogger::log("Image upload failed: " . $_FILES['portfolio_images']['name'][$i] . " - " . $upload['message'], 'WARNING');
+            }
+        }
+        
+        if ($success_count > 0) {
+            $show_alt_text_form = true;
+            $upload_message = '<div class="alert alert-info">Uploaded ' . $success_count . ' image(s). Please add alt text for each.</div>';
+        } elseif ($error_count > 0) {
+            $upload_message = '<div class="alert alert-danger">Failed to upload ' . $error_count . ' image(s). Please try again.</div>';
         }
     }
 }
@@ -316,27 +397,68 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                 <h5>Portfolio Images Gallery</h5>
                             </div>
                             <div class="card-body">
-                                <form method="POST" enctype="multipart/form-data">
-                                    <input type="hidden" name="action" value="add_image">
-                                    <input type="hidden" name="portfolio_id" value="<?php echo $edit_item['id']; ?>">
-                                    
-                                    <div class="row">
-                                        <div class="col-md-8 mb-3">
-                                            <label for="portfolio_image" class="form-label">Add Image to Gallery</label>
-                                            <input type="file" class="form-control" id="portfolio_image" name="portfolio_image" accept="image/*" required>
-                                            <small class="text-muted">Max 5MB. Recommended: 800x600px</small>
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label for="alt_text" class="form-label">Alt Text</label>
-                                            <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Describe the image" value="">
-                                            <small class="text-muted">For accessibility</small>
-                                        </div>
-                                    </div>
+                                <?php if (!empty($upload_message)): ?>
+                                    <?php echo $upload_message; ?>
+                                <?php endif; ?>
 
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="fas fa-plus"></i> Add Image
-                                    </button>
-                                </form>
+                                <?php if ($show_alt_text_form && !empty($uploaded_images)): ?>
+                                    <!-- Alt Text Form (shown after upload) -->
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> Please add alt text for each image for better accessibility.
+                                    </div>
+                                    <form method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="action" value="save_images_with_alt">
+                                        <input type="hidden" name="portfolio_id" value="<?php echo $edit_item['id']; ?>">
+                                        
+                                        <?php foreach ($uploaded_images as $index => $image): ?>
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <img src="<?php echo htmlspecialchars($image['url']); ?>" alt="Preview" class="img-fluid rounded" style="max-height: 150px;">
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <h6 class="card-title"><?php echo htmlspecialchars($image['name']); ?></h6>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Alt Text for this image</label>
+                                                            <input type="text" class="form-control" name="image_data[<?php echo $index; ?>][alt_text]" placeholder="Describe what's in this image" value="">
+                                                            <small class="text-muted">This helps with accessibility and SEO</small>
+                                                        </div>
+                                                        <input type="hidden" name="image_data[<?php echo $index; ?>][url]" value="<?php echo htmlspecialchars($image['url']); ?>">
+                                                        <input type="hidden" name="image_data[<?php echo $index; ?>][filename]" value="<?php echo htmlspecialchars($image['filename']); ?>">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                        
+                                        <div class="mt-3">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-save"></i> Save All Images
+                                            </button>
+                                            <a href="<?php echo SITE_URL; ?>/admin/portfolio.php?edit=<?php echo $edit_item['id']; ?>" class="btn btn-secondary">
+                                                <i class="fas fa-times"></i> Cancel
+                                            </a>
+                                        </div>
+                                    </form>
+                                <?php else: ?>
+                                    <!-- Upload Form -->
+                                    <form method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="action" value="add_image">
+                                        <input type="hidden" name="portfolio_id" value="<?php echo $edit_item['id']; ?>">
+                                        
+                                        <div class="mb-3">
+                                            <label for="portfolio_images" class="form-label">Add Images to Gallery</label>
+                                            <input type="file" class="form-control" id="portfolio_images" name="portfolio_images[]" accept="image/*" multiple required>
+                                            <small class="text-muted">Select one or multiple images. Max 5MB each. Recommended: 800x600px</small>
+                                            <div id="filePreview" class="mt-2"></div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-upload"></i> Upload Images
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
 
                                 <!-- Display Gallery -->
                                 <?php
@@ -468,6 +590,43 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                 }
             })
             .catch(error => console.error('Error:', error));
+        }
+
+        // File preview for multiple image uploads
+        const fileInput = document.getElementById('portfolio_images');
+        const filePreview = document.getElementById('filePreview');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                filePreview.innerHTML = '';
+                const files = this.files;
+                
+                if (files.length === 0) {
+                    return;
+                }
+
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'alert alert-info';
+                previewContainer.innerHTML = `<strong>${files.length} file(s) selected:</strong>`;
+                
+                const fileList = document.createElement('ul');
+                fileList.className = 'mb-0 mt-2';
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <strong>${file.name}</strong> 
+                        <span class="text-muted">(${fileSize} MB)</span>
+                    `;
+                    fileList.appendChild(listItem);
+                }
+                
+                previewContainer.appendChild(fileList);
+                filePreview.appendChild(previewContainer);
+            });
         }
     </script>
 </body>

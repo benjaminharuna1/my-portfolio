@@ -1,23 +1,33 @@
+# PHP Configuration
+php_value upload_max_filesize 50M
+php_value post_max_size 50M
+php_value max_input_time 300
+php_value max_execution_time 300
+
 # Enable mod_rewrite
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /portfolio/
-    
-    # Remove .php extension
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L]
 </IfModule>
 
-# Security headers
+# Security Headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>
 
-# Disable directory listing
-Options -Indexes
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
 
-# Set default character encoding
-AddDefaultCharset UTF-8
+# Cache Control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>

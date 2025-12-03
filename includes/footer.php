@@ -30,7 +30,7 @@
             </div>
             <hr class="bg-white-50">
             <div class="text-center text-white-50">
-                <p>&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
+                <p>&copy; <?php echo date('Y'); ?> <a href="https://censonotech.com.ng">Censono Tech</a> - <?php echo SITE_NAME; ?>. All rights reserved.</p>
             </div>
         </div>
     </footer>

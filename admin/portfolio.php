@@ -105,6 +105,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Update image alt text
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_image') {
+    $image_id = intval($_POST['image_id']);
+    $alt_text = $conn->real_escape_string($_POST['alt_text']);
+    $portfolio_id = intval($_POST['portfolio_id']);
+    
+    if ($conn->query("UPDATE portfolio_images SET alt_text='$alt_text' WHERE id=$image_id")) {
+        $message = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Image alt text updated successfully.</div>';
+        ErrorLogger::log("Image alt text updated: ID $image_id", 'INFO');
+        
+        // Redirect back to edit view
+        header('Location: ' . SITE_URL . '/admin/portfolio.php?edit=' . $portfolio_id);
+        exit;
+    } else {
+        $message = '<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Failed to update image alt text.</div>';
+    }
+}
+
 // Save images with alt text
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_images_with_alt') {
     $portfolio_id = intval($_POST['portfolio_id']);
@@ -234,6 +252,8 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
         .image-item:hover .image-item-overlay { opacity: 1; }
         .drag-handle { color: white; font-size: 16px; font-weight: bold; cursor: grab; }
         .image-item:active .drag-handle { cursor: grabbing; }
+        .image-item .edit-btn { background: rgba(0,123,255,0.8); color: white; border: none; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 12px; transition: background 0.2s ease; }
+        .image-item .edit-btn:hover { background: rgba(0,123,255,1); }
         .image-item .delete-btn { background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 12px; transition: background 0.2s ease; }
         .image-item .delete-btn:hover { background: rgba(255,0,0,1); }
     </style>
@@ -474,6 +494,7 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                                                 <img src="<?php echo getImageUrl($img['image_url']); ?>" alt="<?php echo !empty($img['alt_text']) ? htmlspecialchars($img['alt_text']) : 'Gallery Image'; ?>">
                                                 <div class="image-item-overlay">
                                                     <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                                                    <button type="button" class="edit-btn" data-bs-toggle="modal" data-bs-target="#editImageModal" data-image-id="<?php echo $img['id']; ?>" data-alt-text="<?php echo htmlspecialchars($img['alt_text']); ?>" title="Edit alt text">Edit</button>
                                                     <a href="?delete_image=<?php echo $img['id']; ?>" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</a>
                                                 </div>
                                             </div>
@@ -496,6 +517,35 @@ $pagination = getPaginatedItems($conn, 'portfolio_items', $page, 10, 'id DESC');
                 <?php endif; ?>
             </main>
         </div>
+    <!-- Edit Image Modal -->
+    <div class="modal fade" id="editImageModal" tabindex="-1" aria-labelledby="editImageLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editImageLabel">Edit Image Alt Text</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="editImageForm">
+                    <input type="hidden" name="action" value="update_image">
+                    <input type="hidden" name="image_id" id="editImageId">
+                    <input type="hidden" name="portfolio_id" value="<?php echo $edit_item['id'] ?? ''; ?>">
+                    
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editAltText" class="form-label">Alt Text</label>
+                            <textarea class="form-control" id="editAltText" name="alt_text" rows="3" placeholder="Describe what's in this image"></textarea>
+                            <small class="text-muted">This helps with accessibility and SEO</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

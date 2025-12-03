@@ -17,8 +17,8 @@ $page_title = 'Home';
                         $result = $conn->query("SELECT * FROM social_links LIMIT 4");
                         while ($social = $result->fetch_assoc()):
                         ?>
-                            <a href="<?php echo htmlspecialchars($social['url']); ?>" class="me-3" target="_blank">
-                                <i class="<?php echo htmlspecialchars($social['icon']); ?>"></i>
+                            <a href="<?php echo htmlspecialchars($social['url']); ?>" class="social-icon-link" target="_blank" title="<?php echo htmlspecialchars($social['platform']); ?>">
+                                <?php echo icon($social['icon'], 'social-icon', 'fa-link'); ?>
                             </a>
                         <?php endwhile; ?>
                     </div>

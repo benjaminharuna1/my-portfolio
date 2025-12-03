@@ -22,7 +22,13 @@ $page_title = 'Home';
                             </a>
                         <?php endwhile; ?>
                     </div>
-                    <h1 class="display-4 fw-bold mb-3">I'm Web Developer</h1>
+                    <?php
+                    $about = $conn->query("SELECT greeting, subtitle FROM about LIMIT 1")->fetch_assoc();
+                    $greeting = $about && !empty($about['greeting']) ? htmlspecialchars($about['greeting']) : "Hello, welcome to my portfolio";
+                    $subtitle = $about && !empty($about['subtitle']) ? htmlspecialchars($about['subtitle']) : "Web Developer";
+                    ?>
+                    <p class="text-muted mb-2"><?php echo $greeting; ?></p>
+                    <h1 class="display-4 fw-bold mb-3">I'm a <span class="text-primary"><?php echo $subtitle; ?></span></h1>
                     <p class="lead mb-4">Creating beautiful and functional web experiences with modern technologies.</p>
                     <div class="button-group">
                         <a href="<?php echo SITE_URL; ?>/about.php" class="btn btn-primary btn-lg me-3">

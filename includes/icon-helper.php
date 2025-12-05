@@ -117,4 +117,30 @@ function displayIcon($name, $options = [], $fallback = '') {
     
     return $icon_html;
 }
+
+/**
+ * Get all custom icons from database
+ * @return array Array of custom icons with id, name, slug, and svg_content
+ */
+function getAllCustomIcons() {
+    global $conn;
+    
+    // Check if custom_icons table exists
+    $table_check = $conn->query("SHOW TABLES LIKE 'custom_icons'");
+    if (!$table_check || $table_check->num_rows === 0) {
+        return [];
+    }
+    
+    $query = $conn->query("SELECT id, name, slug, svg_content FROM custom_icons ORDER BY name ASC");
+    
+    if ($query && $query->num_rows > 0) {
+        $icons = [];
+        while ($icon = $query->fetch_assoc()) {
+            $icons[] = $icon;
+        }
+        return $icons;
+    }
+    
+    return [];
+}
 ?>

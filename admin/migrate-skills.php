@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $message = '';
 $success = false;
+$migrations_run = [];
 
 // Check if skills table exists
 $result = $conn->query("SHOW TABLES LIKE 'skills'");
@@ -28,6 +29,8 @@ if ($result->num_rows === 0) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci";
     
     if ($conn->query($create_table_sql)) {
+        $migrations_run[] = 'Skills table created';
+        
         // Insert sample skills data
         $insert_sql = "INSERT INTO `skills` (`name`, `proficiency`, `category`, `sort_order`) VALUES
             ('Web Design', 90, 'Design', 1),
@@ -36,18 +39,41 @@ if ($result->num_rows === 0) {
             ('PHP & MySQL', 92, 'Backend', 4)";
         
         if ($conn->query($insert_sql)) {
-            $message = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Migration successful: skills table created with sample data.</div>';
+            $migrations_run[] = 'Sample skills data inserted';
             $success = true;
         } else {
-            $message = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Table created but failed to insert sample data: ' . $conn->error . '</div>';
+            $migrations_run[] = 'Sample data insertion failed: ' . $conn->error;
             $success = true;
         }
     } else {
         $message = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Migration failed: ' . $conn->error . '</div>';
     }
 } else {
-    $message = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Migration skipped: skills table already exists.</div>';
-    $success = true;
+    // Table exists, check if icon column exists
+    $column_check = $conn->query("SHOW COLUMNS FROM skills LIKE 'icon'");
+    if ($column_check->num_rows === 0) {
+        // Add icon column
+        if ($conn->query("ALTER TABLE skills ADD COLUMN icon varchar(100) DEFAULT NULL AFTER category")) {
+            $migrations_run[] = 'Icon column added to skills table';
+            $success = true;
+        } else {
+            $message = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Failed to add icon column: ' . $conn->error . '</div>';
+        }
+    } else {
+        $migrations_run[] = 'Skills table already exists with all required columns';
+        $success = true;
+    }
+}
+
+// Build success message
+if ($success && !empty($migrations_run)) {
+    $message = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Migration successful:<ul class="mb-0 mt-2">';
+    foreach ($migrations_run as $migration) {
+        $message .= '<li>' . htmlspecialchars($migration) . '</li>';
+    }
+    $message .= '</ul></div>';
+} elseif ($success) {
+    $message = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Migration skipped: skills table already exists with all required columns.</div>';
 }
 ?>
 <!DOCTYPE html>

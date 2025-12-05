@@ -13,6 +13,15 @@ $message = '';
 $form_data = [];
 $form_errors = [];
 
+// Display success message from redirect
+if (isset($_GET['success'])) {
+    if ($_GET['success'] === 'updated') {
+        $message = '<div class="alert alert-success">Skill updated successfully.</div>';
+    } elseif ($_GET['success'] === 'created') {
+        $message = '<div class="alert alert-success">Skill added successfully.</div>';
+    }
+}
+
 // Delete skill
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
@@ -52,17 +61,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($form_data['id']) {
             $id = $form_data['id'];
             if ($conn->query("UPDATE skills SET name='$name', proficiency=$proficiency, category='$category', icon='$icon', sort_order=$sort_order WHERE id=$id")) {
-                $message = '<div class="alert alert-success">Skill updated successfully.</div>';
                 ErrorLogger::log("Skill updated: ID $id", 'INFO');
-                $form_data = [];
+                header('Location: ' . SITE_URL . '/admin/skills.php?success=updated');
+                exit;
             } else {
                 $form_errors[] = 'Database error: ' . $conn->error;
             }
         } else {
             if ($conn->query("INSERT INTO skills (name, proficiency, category, icon, sort_order) VALUES ('$name', $proficiency, '$category', '$icon', $sort_order)")) {
-                $message = '<div class="alert alert-success">Skill added successfully.</div>';
                 ErrorLogger::log("Skill created: $name", 'INFO');
-                $form_data = [];
+                header('Location: ' . SITE_URL . '/admin/skills.php?success=created');
+                exit;
             } else {
                 $form_errors[] = 'Database error: ' . $conn->error;
             }

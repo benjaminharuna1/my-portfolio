@@ -14,7 +14,7 @@ $page_title = 'Home';
                 <div class="col-lg-6 mb-4 mb-lg-0">
                     <div class="social-icons mb-4">
                         <?php
-                        $result = $conn->query("SELECT * FROM social_links LIMIT 4");
+                        $result = $conn->query("SELECT * FROM social_links");
                         while ($social = $result->fetch_assoc()):
                         ?>
                             <a href="<?php echo htmlspecialchars($social['url']); ?>" class="social-icon-link" target="_blank" title="<?php echo htmlspecialchars($social['platform']); ?>">

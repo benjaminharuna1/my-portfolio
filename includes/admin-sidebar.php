@@ -52,6 +52,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
 
+            <!-- Skills -->
+            <li class="nav-item">
+                <a class="nav-link <?php echo $current_page === 'skills.php' ? 'active' : ''; ?>" 
+                   href="<?php echo SITE_URL; ?>/admin/skills.php">
+                    <i class="fas fa-star"></i> Skills
+                </a>
+            </li>
+
             <!-- Testimonials -->
             <li class="nav-item">
                 <a class="nav-link <?php echo $current_page === 'testimonials.php' ? 'active' : ''; ?>" 
